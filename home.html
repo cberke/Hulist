@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    .title {
+      background-color: rgb(0, 222, 11);
+      color: rgb(0, 0, 0);
+      border: 2px solid black;
+      margin: 20px;
+      padding: 20px;
+    }
+  </style>
+</head>
+
+<script>
+  function search() {
+    title = document.getElementById("title");
+    results = document.getElementById("resultsText");
+    results.innerText = title.value;
+    title.innerText = "";
+    results.style.display = "block";
+  }
+
+  function enterSearch(event) {
+    if (event.keyCode === 13) {
+      title = document.getElementById("title");
+      results = document.getElementById("resultsText");
+      results.innerText = title.value;
+      title.innerTex = "";
+      results.style.display = "block";
+    }
+  }
+</script>
+
+<body>
+
+  <div id="Header" class="title">
+    <h2>Hulist</h2>
+    <p>name is a work in progress</p>
+  </div>
+
+  <div>
+    <input id="title" type="text" onkeypress="enterSearch(event)" placeholder="Search TV Show Name...">
+    <button id="searchButton" type="button" onclick="search()">Search</button>
+  </div>
+
+  <p id="resultsText" style='display: none'>Test</p>
+
+</body>
+
+</html>
