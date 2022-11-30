@@ -18,7 +18,7 @@
     title = document.getElementById("title");
     results = document.getElementById("resultsText");
     results.innerText = title.value;
-    title.innerText = "";
+    title.value = "";
     results.style.display = "block";
   }
 
@@ -27,10 +27,33 @@
       title = document.getElementById("title");
       results = document.getElementById("resultsText");
       results.innerText = title.value;
-      title.innerTex = "";
+      title.value = "";
       results.style.display = "block";
     }
   }
+
+  //testing code
+  function apiAccessTest(event) {
+
+    fetch("https://api.flixed.io/v1/streaming-providers/10008?region=US&apiKey=smpaqIIQi3h3EkuLsJEX4nqbgVKPxVhb", {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+      },
+    })
+      .then(response => response.json())
+      .then((data) => {
+        results = document.getElementById("resultsText");
+        results.innerText = data;
+        results.style.display = "block";
+      })
+      .catch((error) => {
+        results = document.getElementById("resultsText");
+        results.innerText = error.message;
+        results.style.display = "block";
+      });
+  }
+
 </script>
 
 <body>
@@ -43,6 +66,8 @@
   <div>
     <input id="title" type="text" onkeypress="enterSearch(event)" placeholder="Search TV Show Name...">
     <button id="searchButton" type="button" onclick="search()">Search</button>
+    <!--testing code-->
+    <button id="apiTest" type="button" onclick="apiAccessTest()">Test API</button>
   </div>
 
   <p id="resultsText" style='display: none'>Test</p>
