@@ -36,9 +36,9 @@
   //testing code
   function apiAccessTest(event) {
 
-    // fetch("https://api.flixed.io/v1/streaming-providers/10008?region=US&apiKey=8MqjZtMPW1LUUEydpqjzULeQ6EmBfbEg", {
-    // https://api.flixed.io/v1/movies/" + id + "?idType=imdb&apiKey=8MqjZtMPW1LUUEydpqjzULeQ6EmBfbEg
-    // https://api.flixed.io/v1/movies/0208092?idType=imdb&apiKey=8MqjZtMPW1LUUEydpqjzULeQ6EmBfbEg
+    // fetch("https://api.flixed.io/v1/streaming-providers/10008?region=US&apiKey=JvZosSdhe61qyfqx9cWtDmdng57IQHQJ", {
+    // https://api.flixed.io/v1/movies/" + id + "?idType=imdb&apiKey=JvZosSdhe61qyfqx9cWtDmdng57IQHQJ
+    // https://api.flixed.io/v1/movies/0208092?idType=imdb&apiKey=JvZosSdhe61qyfqx9cWtDmdng57IQHQJ
     //   method: 'GET',
     //   headers: {
     //     accept: 'application/json',
@@ -48,55 +48,37 @@
 
 
 
-    // fetch("http://www.omdbapi.com/?t=In+Bruges&apikey=53dcb6b7", {
-    //   method: 'GET',
-    //   headers: {
-    //     accept: 'application/json',
-    //   },
-    // })
-    // .then(response => response.json())
-    // .then((titleData) => {
-    //  id = titleData.imdbID;
-    //   while (id.charAt(0) === 't') {
-    //       id = id.substring(1);
-    //   }
-    //   fetch("https://api.flixed.io/v1/streaming-providers/10008?region=US&apiKey=8MqjZtMPW1LUUEydpqjzULeQ6EmBfbEg", {
-    //     method: 'GET',
-    //       headers: {
-    //         accept: 'application/json',
-    //       },
-    //     })
-    //       .then(flixedRes => {
-    //         flixedRes.json()
-    //       })
-    //       .then((data) => {
-    //         results = document.getElementById("resultsText");
-    //         results.innerText = data.watchAvailability.directUrls[0];
-    //         results.style.display = "block";
-    //       })
-    //       .catch((error) => {
-    //         results = document.getElementById("resultsText");
-    //         results.innerText = error.message;
-    //         results.style.display = "block";
-    //       });
-    //   })
-    //   .catch((error) => {
-    //     results = document.getElementById("resultsText");
-    //     results.innerText = error.message;
-    //     results.style.display = "block";
-    //   });
-
-
-    fetch("https://api.flixed.io/v1/movies/0208092?idType=imdb&apiKey=8MqjZtMPW1LUUEydpqjzULeQ6EmBfbEg", {
+    fetch("http://www.omdbapi.com/?t=Snatch&apikey=53dcb6b7", {
       method: 'GET',
+      headers: {
+        accept: 'application/json',
+      },
     })
-      .then(response => {
-        return response.json();
-      })
-      .then((data) => {
-        results = document.getElementById("resultsText");
-        results.innerText = data;
-        results.style.display = "block";
+      .then(response => response.json())
+      .then((titleData) => {
+        id = titleData.imdbID;
+        while (id.charAt(0) === 't') {
+          id = id.substring(1);
+        }
+        fetch(`http://localhost:8080/movie/${id}`, {
+          method: 'GET',
+          headers: {
+            accept: 'application/json',
+          },
+        })
+          .then(flixedRes => {
+            flixedRes.json()
+          })
+          .then((data) => {
+            results = document.getElementById("resultsText");
+            results.innerText = data.url;
+            results.style.display = "block";
+          })
+          .catch((error) => {
+            results = document.getElementById("resultsText");
+            results.innerText = error.message;
+            results.style.display = "block";
+          });
       })
       .catch((error) => {
         results = document.getElementById("resultsText");
