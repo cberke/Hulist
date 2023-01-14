@@ -9,6 +9,15 @@
       "request": "launch",
       "name": "Open home.html",
       "file": "/Users/coleberke/Desktop/Hulist/Hulist/home.html"
+    },
+    {
+      "name": "Attach by Process ID",
+      "processId": "${command:PickProcess}",
+      "request": "attach",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node"
     }
   ]
 }

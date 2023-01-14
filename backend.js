@@ -1,8 +1,11 @@
 import express from 'express';
 import fetch from 'node-fetch';
+import cors from 'cors';
 
 const app = express();
 const PORT = 8080;
+
+app.use(cors());
 
 app.get('/movie/:id', (req, res) => {
 
@@ -19,7 +22,7 @@ app.get('/movie/:id', (req, res) => {
     })
       .then(flixedRes => flixedRes.json())
       .then((data) => {
-        res.send({ url: `${data.watchAvailability[0].directUrls[0]}` });
+        res.json({ url: `${data.watchAvailability[0].directUrls[0]}`, });
       })
       .catch((error) => {
         res.status(418).send({ message: error.message });
