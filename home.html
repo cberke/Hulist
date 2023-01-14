@@ -16,9 +16,11 @@
 
 <script>
   function search() {
-    title = document.getElementById("title");
+    titleElement = document.getElementById("title");
+    title = title.value;
+    title = title.replace(" ", "+");
 
-    fetch(`http://www.omdbapi.com/?t=${title.value}&apikey=53dcb6b7`, {
+    fetch(`http://www.omdbapi.com/?t=${title}&apikey=53dcb6b7`, {
       method: 'GET',
       headers: {
         accept: 'application/json',
