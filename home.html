@@ -17,7 +17,7 @@
 <script>
   function search() {
     titleElement = document.getElementById("title");
-    title = title.value;
+    title = titleElement.value;
     title = title.replace(" ", "+");
 
     fetch(`http://www.omdbapi.com/?t=${title}&apikey=53dcb6b7`, {
