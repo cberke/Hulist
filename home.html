@@ -15,7 +15,7 @@
 
 
 <script>
-  function search() {
+  function searchMovie() {
     titleElement = document.getElementById("title");
     title = titleElement.value;
     title = title.replace(" ", "+");
@@ -54,15 +54,12 @@
       });
   }
 
-  function enterSearch(event) {
-    if (event.keyCode === 13) {
-      search();
-    }
-  }
+  function searchTvShow() {
+    titleElement = document.getElementById("title");
+    title = titleElement.value;
+    title = title.replace(" ", "+");
 
-  //testing code
-  function apiAccessTest(event) {
-    fetch("http://www.omdbapi.com/?t=Snatch&apikey=53dcb6b7", {
+    fetch(`http://www.omdbapi.com/?t=${title}&apikey=53dcb6b7`, {
       method: 'GET',
       headers: {
         accept: 'application/json',
@@ -74,7 +71,7 @@
         while (id.charAt(0) === 't') {
           id = id.substring(1);
         }
-        fetch(`http://localhost:8080/movie/${id}`, {
+        fetch(`http://localhost:8080/tvshow/${id}`, {
           method: 'GET',
         })
           .then(flixedRes => flixedRes.json())
@@ -96,6 +93,32 @@
       });
   }
 
+  function enterSearch(event) {
+    if (event.keyCode === 13) {
+      if (document.getElementById("tvOrMovie").value === "Movie") {
+        searchMovie();
+      } else {
+        searchTvShow();
+      }
+    }
+  }
+
+  function toggle() {
+    switchValue = document.getElementById("tvOrMovie").value;
+    document.getElementById("searchButton").innerText = `Search ${switchValue}`;
+
+    if (switchValue = "TV Show") {
+      document.getElementById("searchButton").onclick = searchTvShow();
+    } else {
+      document.getElementById("searchButton").onclick = searchMovie();
+    }
+  }
+
+  //testing code
+  function apiAccessTest(event) {
+
+  }
+
 </script>
 
 <body>
@@ -106,8 +129,15 @@
   </div>
 
   <div>
-    <input id="title" type="text" onkeypress="enterSearch(event)" placeholder="Search TV Show Name...">
-    <button id="searchButton" type="button" onclick="search()">Search</button>
+    <input id="title" type="text" onkeypress="enterSearch(event)" placeholder="Search Name...">
+
+    <button id="searchButton" type="button" onclick="search()">Search Movie</button>
+
+    <select name="tvOrMovie" id="tvOrMovie" data-role="slider" onchange="toggle()">
+      <option value="Movie">Movie</option>
+      <option value="TV Show">TV Show</option>
+    </select>
+
     <!--testing code-->
     <button id="apiTest" type="button" onclick="apiAccessTest()">Test API</button>
   </div>
