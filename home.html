@@ -19,33 +19,14 @@
     titleElement = document.getElementById("title");
     title = titleElement.value;
     title = title.replace(" ", "+");
-
-    fetch(`http://www.omdbapi.com/?t=${title}&apikey=53dcb6b7`, {
+    fetch(`http://localhost:8080/movie/${title}`, {
       method: 'GET',
-      headers: {
-        accept: 'application/json',
-      },
     })
-      .then(response => response.json())
-      .then((titleData) => {
-        id = titleData.imdbID;
-        while (id.charAt(0) === 't') {
-          id = id.substring(1);
-        }
-        fetch(`http://localhost:8080/movie/${id}`, {
-          method: 'GET',
-        })
-          .then(flixedRes => flixedRes.json())
-          .then((data) => {
-            results = document.getElementById("resultsText");
-            results.innerText = data.url;
-            results.style.display = "block";
-          })
-          .catch((error) => {
-            results = document.getElementById("resultsText");
-            results.innerText = error.message;
-            results.style.display = "block";
-          });
+      .then(flixedRes => flixedRes.json())
+      .then((data) => {
+        results = document.getElementById("resultsText");
+        results.innerText = data.url;
+        results.style.display = "block";
       })
       .catch((error) => {
         results = document.getElementById("resultsText");
