@@ -1,13 +1,46 @@
 import express from 'express';
 import fetch from 'node-fetch';
 import cors from 'cors';
+import mysql from 'mysql2';
+
 
 const app = express();
 const PORT = 8080;
 
+let connection = mysql.createConnection({
+  host: '127.0.0.1',
+  user: 'root',
+  password: 'testpw123!',
+  database: 'Streamlist'
+});
+
 app.use(cors());
 
 app.get('/movie/:id', (req, res) => {
+
+  // connection.connect(function (err) {
+  //   if (err) {
+  //     return console.error('error: ' + err.message);
+  //   }
+
+  //   let sql = 'SHOW TABLES';
+
+  //   connection.query(sql, function (err, results, fields) {
+  //     if (err) {
+  //       console.log(err.message);
+  //     }
+  //     console.log(results)
+  //   });
+
+  //   connection.end(function (err) {
+  //     if (err) {
+  //       return console.log('error:' + err.message);
+  //     }
+  //     console.log('Close the database connection.');
+  //   });
+  // });
+
+
 
   const { id } = req.params;
 
