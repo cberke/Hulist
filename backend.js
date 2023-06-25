@@ -169,6 +169,7 @@ app.get('/tvshow/:title', (req, res) => {
 app.get('/episode', (req, res) => {
 
   var title = req.query.title;
+  title = title.toUpperCase();
   var seasonNum = req.query.seasonNum;
   var episodeNum = req.query.episodeNum;
   var episodeID = req.query.episodeID;
