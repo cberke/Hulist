@@ -39,33 +39,71 @@
     titleElement = document.getElementById("title");
     title = titleElement.value;
     title = title.replace(" ", "+");
-
-    fetch(`http://www.omdbapi.com/?t=${title}&apikey=53dcb6b7`, {
+    fetch(`http://localhost:8080/tvshow/${title}`, {
       method: 'GET',
-      headers: {
-        accept: 'application/json',
-      },
     })
-      .then(response => response.json())
-      .then((titleData) => {
-        id = titleData.imdbID;
-        while (id.charAt(0) === 't') {
-          id = id.substring(1);
+      .then(flixedRes => flixedRes.json())
+      .then((data) => {
+        seasons = document.getElementById("seasonNum");
+        while (seasons.options.length > 1) {
+          seasons.remove(1);
         }
-        fetch(`http://localhost:8080/tvshow/${id}`, {
-          method: 'GET',
-        })
-          .then(flixedRes => flixedRes.json())
-          .then((data) => {
-            results = document.getElementById("resultsText");
-            results.innerText = data.url;
-            results.style.display = "block";
-          })
-          .catch((error) => {
-            results = document.getElementById("resultsText");
-            results.innerText = error.message;
-            results.style.display = "block";
-          });
+
+        for (let i = 0; i < data.length; i++) {
+          var option = document.createElement("option");
+          option.text = `${i + 1}`;
+          option.value = `${i + 1}`;
+          seasons.add(option);
+        }
+        sessionStorage.currShow = JSON.stringify(data);
+        document.getElementById("episodeNum").style.display = "none";
+        seasons.style.display = "block";
+      })
+      .catch((error) => {
+        results = document.getElementById("resultsText");
+        results.innerText = error.message;
+        results.style.display = "block";
+      });
+  }
+
+  function updateEpisodes() {
+    seasonNum = document.getElementById("seasonNum").value;
+    if (seasonNum === "-") {
+      return;
+    }
+
+    data = JSON.parse(sessionStorage.currShow);
+    episodes = document.getElementById("episodeNum");
+    while (episodes.options.length > 1) {
+      episodes.remove(1);
+    }
+
+    for (let i = 0; i < data[seasonNum - 1].episodes.length; i++) {
+      var option = document.createElement("option");
+      option.text = `${i + 1}`;
+      option.value = `${i + 1}`;
+      episodes.add(option);
+    }
+    episodes.style.display = "block";
+  }
+
+  function searchEpisode() {
+    seasonNum = document.getElementById("seasonNum").value;
+    episodeNum = document.getElementById("episodeNum").value;
+    data = JSON.parse(sessionStorage.currShow);
+    episodeID = data[seasonNum - 1].episodes[episodeNum - 1];
+
+    titleElement = document.getElementById("title");
+    title = titleElement.value;
+    title = title.replace(" ", "+");
+    fetch(`http://localhost:8080/episode?title=${title}&seasonNum=${seasonNum}&episodeNum=${episodeNum}&episodeID=${episodeID}`, {
+      method: 'GET',
+    })
+      .then(flixedRes => flixedRes.json())
+      .then((data) => {
+        results = document.getElementById("resultsText");
+        results.innerText = data.url;
+        results.style.display = "block";
       })
       .catch((error) => {
         results = document.getElementById("resultsText");
@@ -88,16 +126,13 @@
     switchValue = document.getElementById("tvOrMovie").value;
     document.getElementById("searchButton").innerText = `Search ${switchValue}`;
 
-    if (switchValue = "TV Show") {
-      document.getElementById("searchButton").onclick = searchTvShow();
+    if (switchValue === "TV Show") {
+      document.getElementById('searchButton').setAttribute('onclick', 'searchTvShow()')
     } else {
-      document.getElementById("searchButton").onclick = searchMovie();
+      document.getElementById("seasonNum").style.display = "none";
+      document.getElementById("episodeNum").style.display = "none";
+      document.getElementById('searchButton').setAttribute('onclick', 'searchMovie()')
     }
-  }
-
-  //testing code
-  function apiAccessTest(event) {
-
   }
 
 </script>
@@ -119,8 +154,16 @@
       <option value="TV Show">TV Show</option>
     </select>
 
-    <!--testing code-->
-    <button id="apiTest" type="button" onclick="apiAccessTest()">Test API</button>
+  </div>
+
+  <div>
+    <select name="seasonNum" id="seasonNum" data-role="slider" onchange="updateEpisodes()" style='display: none'>
+      <option value="-" id="nullSeason">Choose a Season</option>
+    </select>
+
+    <select name="episodeNum" id="episodeNum" data-role="slider" onchange="searchEpisode()" style='display: none'>
+      <option value="-" id="nullEpisode">Choose an Episode</option>
+    </select>
   </div>
 
   <p id="resultsText" style='display: none'>Test</p>
