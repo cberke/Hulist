@@ -13,7 +13,6 @@
   </style>
 </head>
 
-
 <script>
   function searchMovie() {
     titleElement = document.getElementById("title");
@@ -27,6 +26,7 @@
         results = document.getElementById("resultsText");
         results.innerText = data.url;
         results.style.display = "block";
+        document.getElementById("playlistFeatures").removeAttribute("hidden");
       })
       .catch((error) => {
         results = document.getElementById("resultsText");
@@ -104,6 +104,7 @@
         results = document.getElementById("resultsText");
         results.innerText = data.url;
         results.style.display = "block";
+        document.getElementById("playlistFeatures").removeAttribute("hidden");
       })
       .catch((error) => {
         results = document.getElementById("resultsText");
@@ -132,6 +133,29 @@
       document.getElementById("seasonNum").style.display = "none";
       document.getElementById("episodeNum").style.display = "none";
       document.getElementById('searchButton').setAttribute('onclick', 'searchMovie()')
+    }
+    document.getElementById('title').value = "";
+    document.getElementById("playlistFeatures").setAttribute("hidden", "hidden");
+  }
+
+  function openPLCreate() {
+    document.getElementById("playlistCreationSection").removeAttribute("hidden");
+    document.getElementById("openPLCreate").style.display = "none";
+    document.getElementById("email").value = '';
+    document.getElementById("playlistName").value = '';
+  }
+
+  function createPlaylist() {
+    email = document.getElementById("email").value;
+    name = document.getElementById("playlistName").value;
+    if (email === "") {
+      alert("Email field cannot be blank");
+    } else if (name === "") {
+      alert("Name field cannot be blank");
+    } else {
+      document.getElementById("openPLCreate").style.display = "block";
+      document.getElementById("playlistCreationSection").setAttribute("hidden", "hidden");
+      //CREATE PLAYLIST
     }
   }
 
@@ -166,7 +190,25 @@
     </select>
   </div>
 
+  <button id="openPLCreate" type="button" onclick="openPLCreate()">Open Playlist Creation Section</button>
+  <div id="playlistCreationSection" hidden="hidden">
+    Enter email: <input id="email" type="text" placeholder="Enter email...">
+    Enter playlist name: <input id="playlistName" placeholder="Enter playlist name">
+    <button id="createPlaylist" type="button" onclick="createPlaylist()">Create Playlist</button>
+  </div>
+
   <p id="resultsText" style='display: none'>Test</p>
+
+  <!--TODO:
+        1. write create playlist functionality
+        2. write add to playlist functionality, give a pop up window saying that you have to select a playlist when addToPlaylist is clicked without one selected
+  -->
+  <div id="playlistFeatures" hidden="hidden">
+    <select name="playlistSelect" id="playlistSelect" data-role="slider">
+      <option value="-" id="nullPlaylist">Select a Playlist</option>
+    </select>
+    <button id="addToPlaylist" type="button" onclick="addToPlaylist()">Add to Playlist</button>
+  </div>
 
 </body>
 
