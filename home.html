@@ -156,6 +156,23 @@
       document.getElementById("openPLCreate").style.display = "block";
       document.getElementById("playlistCreationSection").setAttribute("hidden", "hidden");
       //CREATE PLAYLIST
+      email = document.getElementById("email").value;
+      playlistName = document.getElementById("playlistName").value;
+
+      fetch(`http://localhost:8080/createPlaylist?email=${email}&name=${playlistName}`, {
+        method: 'GET',
+      })
+        .then(flixedRes => flixedRes.json())
+        .then((data) => {
+          results = document.getElementById("playlistActionResults");
+          results.innerText = data.result;
+          results.style.display = "block";
+        })
+        .catch((error) => {
+          results = document.getElementById("playlistActionResults");
+          results.innerText = error.message;
+          results.style.display = "block";
+        });
     }
   }
 
@@ -200,8 +217,7 @@
   <p id="resultsText" style='display: none'>Test</p>
 
   <!--TODO:
-        1. write create playlist functionality
-        2. write add to playlist functionality, give a pop up window saying that you have to select a playlist when addToPlaylist is clicked without one selected
+        1. write add to playlist functionality, give a pop up window saying that you have to select a playlist when addToPlaylist is clicked without one selected
   -->
   <div id="playlistFeatures" hidden="hidden">
     <select name="playlistSelect" id="playlistSelect" data-role="slider">
@@ -209,6 +225,8 @@
     </select>
     <button id="addToPlaylist" type="button" onclick="addToPlaylist()">Add to Playlist</button>
   </div>
+
+  <p id="playlistActionResults" style='display: none'>Test</p>
 
 </body>
 

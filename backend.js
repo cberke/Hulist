@@ -251,6 +251,66 @@ app.get('/episode', (req, res) => {
   });
 });
 
+app.get('/createPlaylist/', (req, res) => {
+
+  var name = req.query.name;
+  name = name.toUpperCase();
+  var email = req.query.email;
+  email = email.toUpperCase();
+
+  let connection = mysql.createConnection(config);
+
+  connection.connect(function (err) {
+    if (err) {
+      return console.error('error: ' + err.message);
+    }
+  });
+
+  let cacheCheckSql = `SELECT * FROM Playlists WHERE userDefinedName=? AND email=?`;
+
+  connection.query(cacheCheckSql, [name, email], function (err, results, fields) {
+    if (err) {
+      console.log(err.message);
+    }
+    if (results != null && results.length > 0) {
+      connection.end(function (err) {
+        if (err) {
+          return console.log('error:' + err.message);
+        }
+        console.log('Closed the database connection.');
+      });
+
+      res.json({ result: `Playlist already exists`, });
+
+    } else {
+      // Create new playlist
+      let insertSql = `INSERT INTO Playlists(userDefinedName, email) VALUES(?,?)`;
+      let successful = true;
+
+      connection.query(insertSql, [name, email], function (err, results, fields) {
+        if (err) {
+          console.log(err.message);
+          successful = false;
+        }
+      });
+
+      connection.end(function (err) {
+        if (err) {
+          return console.log('error:' + err.message);
+        }
+        console.log('Closed the database connection.');
+      });
+
+      // send the confirmation
+      if (successful) {
+        res.json({ result: `Playlist created`, });
+      } else {
+        res.json({ result: `Failed to create`, });
+      }
+    }
+  });
+});
+
 app.listen(
   PORT,
   () => console.log(`it's alive on http://localhost:${PORT}`)
