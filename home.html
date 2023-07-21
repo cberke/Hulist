@@ -26,7 +26,10 @@
         results = document.getElementById("resultsText");
         results.innerText = data.url;
         results.style.display = "block";
+
+        updatePlaylists();
         document.getElementById("playlistFeatures").removeAttribute("hidden");
+        sessionStorage.metadataId = data.metadataId;
       })
       .catch((error) => {
         results = document.getElementById("resultsText");
@@ -104,7 +107,10 @@
         results = document.getElementById("resultsText");
         results.innerText = data.url;
         results.style.display = "block";
+
+        updatePlaylists();
         document.getElementById("playlistFeatures").removeAttribute("hidden");
+        sessionStorage.metadataId = data.metadataId;
       })
       .catch((error) => {
         results = document.getElementById("resultsText");
@@ -139,7 +145,7 @@
   }
 
   function openPLCreate() {
-    document.getElementById("playlistCreationSection").removeAttribute("hidden");
+    document.getElementById("playlistManagementSection").removeAttribute("hidden");
     document.getElementById("openPLCreate").style.display = "none";
     document.getElementById("email").value = '';
     document.getElementById("playlistName").value = '';
@@ -154,8 +160,7 @@
       alert("Name field cannot be blank");
     } else {
       document.getElementById("openPLCreate").style.display = "block";
-      document.getElementById("playlistCreationSection").setAttribute("hidden", "hidden");
-      //CREATE PLAYLIST
+      document.getElementById("playlistManagementSection").setAttribute("hidden", "hidden");
       email = document.getElementById("email").value;
       playlistName = document.getElementById("playlistName").value;
 
@@ -167,6 +172,10 @@
           results = document.getElementById("playlistActionResults");
           results.innerText = data.result;
           results.style.display = "block";
+
+          if (!document.getElementById("playlistFeatures").hasAttribute("hidden")) {
+            updatePlaylists();
+          }
         })
         .catch((error) => {
           results = document.getElementById("playlistActionResults");
@@ -174,6 +183,62 @@
           results.style.display = "block";
         });
     }
+  }
+
+  function updatePlaylists() {
+    fetch(`http://localhost:8080/getPlaylists/`, {
+      method: 'GET',
+    })
+      .then(flixedRes => flixedRes.json())
+      .then((data) => {
+        playlists = document.getElementById("playlistSelect");
+        while (playlists.options.length > 1) {
+          playlists.remove(1);
+        }
+
+        if (data.code === 1) {
+          for (let i = 0; i < data.names.length; i++) {
+            var option = document.createElement("option");
+            option.text = `${data.playlistInfo[i].userDefinedName}`;
+            option.value = `${data.playlistInfo[i].playlistId}`;
+            playlists.add(option);
+          }
+        }
+      })
+      .catch((error) => {
+        results = document.getElementById("playlistActionResults");
+        results.innerText = error.message;
+        results.style.display = "block";
+      });
+  }
+
+  function addToPlaylist() {
+
+
+    fetch(`http://localhost:8080/addToPlaylist?name=${playlistName}&`, {
+      method: 'GET',
+    })
+      .then(flixedRes => flixedRes.json())
+      .then((data) => {
+        playlists = document.getElementById("playlistSelect");
+        while (playlists.options.length > 1) {
+          playlists.remove(1);
+        }
+
+        if (data.code === 1) {
+          for (let i = 0; i < data.names.length; i++) {
+            var option = document.createElement("option");
+            option.text = `${data.names[i].userDefinedName}`;
+            option.value = `${data.names[i].userDefinedName}`;
+            playlists.add(option);
+          }
+        }
+      })
+      .catch((error) => {
+        results = document.getElementById("playlistActionResults");
+        results.innerText = error.message;
+        results.style.display = "block";
+      });
   }
 
 </script>
@@ -207,8 +272,8 @@
     </select>
   </div>
 
-  <button id="openPLCreate" type="button" onclick="openPLCreate()">Open Playlist Creation Section</button>
-  <div id="playlistCreationSection" hidden="hidden">
+  <button id="openPLCreate" type="button" onclick="openPLCreate()">Open Playlist Management Section</button>
+  <div id="playlistManagementSection" hidden="hidden">
     Enter email: <input id="email" type="text" placeholder="Enter email...">
     Enter playlist name: <input id="playlistName" placeholder="Enter playlist name">
     <button id="createPlaylist" type="button" onclick="createPlaylist()">Create Playlist</button>
@@ -217,7 +282,11 @@
   <p id="resultsText" style='display: none'>Test</p>
 
   <!--TODO:
-        1. write add to playlist functionality, give a pop up window saying that you have to select a playlist when addToPlaylist is clicked without one selected
+        1. return metadataId of item along with url so that it can be cached
+        2. insert metadataId + playlistId into playlistContents table when addToPlaylist is clicked
+        3. give a pop up window saying that you have to select a playlist when addToPlaylist is clicked without one selected
+        4. delete playlist button under playlist management section, open with separate button and fetch playlist names when that happens to populate new dropdown
+          a. ask for confirmation when you click delete
   -->
   <div id="playlistFeatures" hidden="hidden">
     <select name="playlistSelect" id="playlistSelect" data-role="slider">
