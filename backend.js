@@ -9,6 +9,15 @@ const PORT = 8080;
 
 app.use(cors());
 
+function endConnection(connection) {
+  connection.end(function (err) {
+    if (err) {
+      return console.log('error:' + err.message);
+    }
+    console.log('Closed the database connection.');
+  });
+}
+
 app.get('/movie/:title', (req, res) => {
 
   const { title } = req.params;
@@ -24,22 +33,19 @@ app.get('/movie/:title', (req, res) => {
     }
   });
 
-  let cacheCheckSql = `SELECT url FROM ContentMetaData WHERE contentName=?`;
+  let cacheCheckSql = `SELECT url, metadataId FROM ContentMetaData WHERE contentName=?`;
 
   connection.query(cacheCheckSql, [title], function (err, results, fields) {
     if (err) {
       console.log(err.message);
     }
     if (results != null && results.length > 0) {
-
-      res.json({ url: `${results[0].url.toString()}`, });
-
-      connection.end(function (err) {
-        if (err) {
-          return console.log('error:' + err.message);
-        }
-        console.log('Closed the database connection.');
+      res.json({
+        url: `${results[0].url.toString()}`,
+        metadataId: `${results[0].metadataId.toString()}`,
       });
+
+      endConnection(connection);
     } else {
       // Get and cache the URL
       fetch(`http://www.omdbapi.com/?t=${title}&apikey=53dcb6b7`, {
@@ -56,6 +62,7 @@ app.get('/movie/:title', (req, res) => {
           }
           if (!id) {
             res.status(418).send({ message: 'Movie not found, please check spelling.' });
+            endConnection(connection);
           } else {
             fetch(`https://api.flixed.io/v1/movies/${id}?idType=imdb&apiKey=JvZosSdhe61qyfqx9cWtDmdng57IQHQJ`, {
               method: 'GET',
@@ -63,11 +70,10 @@ app.get('/movie/:title', (req, res) => {
                 accept: 'application/json',
               },
             })
-              .then(flixedRes => flixedRes.json())
+              .then(res => res.json())
               .then((data) => {
                 if (data.watchAvailability[0].directUrls[0] != null) {
                   // cache the URL and associated metadata
-
                   let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType) VALUES(?,?,'Netflix','MOVIE')`;
 
                   connection.query(insertSql, [data.watchAvailability[0].directUrls[0], title], function (err, results, fields) {
@@ -76,28 +82,38 @@ app.get('/movie/:title', (req, res) => {
                     }
                   });
 
-                  connection.end(function (err) {
+                  // get metadataId for the movie we just inserted                  
+                  var selectSql = `SELECT metadataId FROM ContentMetaData WHERE contentName=?`;
+                  connection.query(selectSql, [title], function (err, results, fields) {
                     if (err) {
-                      return console.log('error:' + err.message);
+                      console.log(err.message);
                     }
-                    console.log('Closed the database connection.');
+
+                    endConnection(connection);
+                    if (results != null && results.length > 0) {
+                      // send the data back
+                      res.json({
+                        url: `${data.watchAvailability[0].directUrls[0]}`,
+                        metadataId: `${results[0].metadataId}`,
+                      });
+                    }
+                  });
+                } else {
+                  endConnection(connection);
+
+                  // send back response
+                  res.json({
+                    url: `no url found in API`,
+                    metadataId: -1,
                   });
                 }
-
-                // send the data back
-                res.json({ url: `${data.watchAvailability[0].directUrls[0]}`, });
               })
               .catch((error) => {
                 res.status(418).send({ message: error.message });
 
                 connection.ping((err) => {
                   if (!err) {
-                    connection.end(function (error) {
-                      if (error) {
-                        return console.log('error:' + err.message);
-                      }
-                      console.log('Closed the database connection.');
-                    });
+                    endConnection(connection);
                   }
                 })
               });
@@ -108,12 +124,7 @@ app.get('/movie/:title', (req, res) => {
 
           connection.ping((err) => {
             if (!err) {
-              connection.end(function (error) {
-                if (error) {
-                  return console.log('error:' + err.message);
-                }
-                console.log('Closed the database connection.');
-              });
+              endConnection(connection);
             }
           })
         });
@@ -150,7 +161,7 @@ app.get('/tvshow/:title', (req, res) => {
               accept: 'application/json',
             },
           })
-            .then(flixedRes => flixedRes.json())
+            .then(res => res.json())
             .then((data) => {
               // send the data back
               res.json(data.seasons);
@@ -185,7 +196,7 @@ app.get('/episode', (req, res) => {
     }
   });
 
-  let cacheCheckSql = `SELECT url FROM ContentMetaData WHERE contentName=? AND seasonNum=? AND episodeNum=?`;
+  let cacheCheckSql = `SELECT url, metadataId FROM ContentMetaData WHERE contentName=? AND seasonNum=? AND episodeNum=?`;
 
   connection.query(cacheCheckSql, [title, seasonNum, episodeNum], function (err, results, fields) {
     if (err) {
@@ -193,14 +204,12 @@ app.get('/episode', (req, res) => {
     }
     if (results != null && results.length > 0) {
 
-      res.json({ url: `${results[0].url.toString()}`, });
-
-      connection.end(function (err) {
-        if (err) {
-          return console.log('error:' + err.message);
-        }
-        console.log('Closed the database connection.');
+      res.json({
+        url: `${results[0].url.toString()}`,
+        metadataId: `${results[0].metadataId.toString()}`,
       });
+
+      endConnection(connection);
     } else {
       // Get and cache the URL
       fetch(`https://api.flixed.io/v1/episodes/${episodeID}?idType=flixed&apiKey=JvZosSdhe61qyfqx9cWtDmdng57IQHQJ`, {
@@ -209,7 +218,7 @@ app.get('/episode', (req, res) => {
           accept: 'application/json',
         },
       })
-        .then(flixedRes => flixedRes.json())
+        .then(res => res.json())
         .then((data) => {
           if (data.watchAvailability[0].contentId != null) {
             // cache the URL and associated metadata
@@ -222,28 +231,38 @@ app.get('/episode', (req, res) => {
               }
             });
 
-            connection.end(function (err) {
+            // get metadataId for the movie we just inserted
+            var selectSql = `SELECT metadataId FROM ContentMetaData WHERE contentName=? AND seasonNum=? AND episodeNum=?`;
+            connection.query(selectSql, [title, seasonNum, episodeNum], function (err, results, fields) {
               if (err) {
-                return console.log('error:' + err.message);
+                console.log(err.message);
               }
-              console.log('Closed the database connection.');
+              endConnection(connection);
+
+              if (results != null && results.length > 0) {
+                // send the data back
+                res.json({
+                  url: `${episodeUrl}`,
+                  metadataId: `${results[0].metadataId}`,
+                });
+              }
+            });
+          } else {
+            endConnection(connection);
+
+            // send back response
+            res.json({
+              url: `no url found in API`,
+              metadataId: -1,
             });
           }
-
-          // send the data back
-          res.json({ url: `${episodeUrl}`, });
         })
         .catch((error) => {
           res.status(418).send({ message: error.message });
 
           connection.ping((err) => {
             if (!err) {
-              connection.end(function (error) {
-                if (error) {
-                  return console.log('error:' + err.message);
-                }
-                console.log('Closed the database connection.');
-              });
+              endConnection(connection);
             }
           })
         });
@@ -272,15 +291,9 @@ app.get('/createPlaylist/', (req, res) => {
       console.log(err.message);
     }
     if (results != null && results.length > 0) {
-      connection.end(function (err) {
-        if (err) {
-          return console.log('error:' + err.message);
-        }
-        console.log('Closed the database connection.');
-      });
+      endConnection(connection);
 
       res.json({ result: `Playlist already exists`, });
-
     } else {
       // Create new playlist
       let insertSql = `INSERT INTO Playlists(userDefinedName, email) VALUES(?,?)`;
@@ -293,12 +306,7 @@ app.get('/createPlaylist/', (req, res) => {
         }
       });
 
-      connection.end(function (err) {
-        if (err) {
-          return console.log('error:' + err.message);
-        }
-        console.log('Closed the database connection.');
-      });
+      endConnection(connection);
 
       // send the confirmation
       if (successful) {
@@ -327,24 +335,14 @@ app.get('/getPlaylists/', (req, res) => {
     }
 
     if (results != null && results.length > 0) {
-      connection.end(function (err) {
-        if (err) {
-          return console.log('error:' + err.message);
-        }
-        console.log('Closed the database connection.');
-      });
+      endConnection(connection);
 
       res.json({
         playlistInfo: results,
         code: 1,
       });
     } else {
-      connection.end(function (err) {
-        if (err) {
-          return console.log('error:' + err.message);
-        }
-        console.log('Closed the database connection.');
-      });
+      endConnection(connection);
 
       res.json({ code: 0, });
     }

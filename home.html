@@ -21,7 +21,7 @@
     fetch(`http://localhost:8080/movie/${title}`, {
       method: 'GET',
     })
-      .then(flixedRes => flixedRes.json())
+      .then(res => res.json())
       .then((data) => {
         results = document.getElementById("resultsText");
         results.innerText = data.url;
@@ -45,7 +45,7 @@
     fetch(`http://localhost:8080/tvshow/${title}`, {
       method: 'GET',
     })
-      .then(flixedRes => flixedRes.json())
+      .then(res => res.json())
       .then((data) => {
         seasons = document.getElementById("seasonNum");
         while (seasons.options.length > 1) {
@@ -102,7 +102,7 @@
     fetch(`http://localhost:8080/episode?title=${title}&seasonNum=${seasonNum}&episodeNum=${episodeNum}&episodeID=${episodeID}`, {
       method: 'GET',
     })
-      .then(flixedRes => flixedRes.json())
+      .then(res => res.json())
       .then((data) => {
         results = document.getElementById("resultsText");
         results.innerText = data.url;
@@ -167,7 +167,7 @@
       fetch(`http://localhost:8080/createPlaylist?email=${email}&name=${playlistName}`, {
         method: 'GET',
       })
-        .then(flixedRes => flixedRes.json())
+        .then(res => res.json())
         .then((data) => {
           results = document.getElementById("playlistActionResults");
           results.innerText = data.result;
@@ -189,7 +189,7 @@
     fetch(`http://localhost:8080/getPlaylists/`, {
       method: 'GET',
     })
-      .then(flixedRes => flixedRes.json())
+      .then(res => res.json())
       .then((data) => {
         playlists = document.getElementById("playlistSelect");
         while (playlists.options.length > 1) {
@@ -197,7 +197,7 @@
         }
 
         if (data.code === 1) {
-          for (let i = 0; i < data.names.length; i++) {
+          for (let i = 0; i < data.playlistInfo.length; i++) {
             var option = document.createElement("option");
             option.text = `${data.playlistInfo[i].userDefinedName}`;
             option.value = `${data.playlistInfo[i].playlistId}`;
@@ -218,7 +218,7 @@
     fetch(`http://localhost:8080/addToPlaylist?name=${playlistName}&`, {
       method: 'GET',
     })
-      .then(flixedRes => flixedRes.json())
+      .then(res => res.json())
       .then((data) => {
         playlists = document.getElementById("playlistSelect");
         while (playlists.options.length > 1) {
