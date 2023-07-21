@@ -22,7 +22,7 @@ app.get('/movie/:title', (req, res) => {
 
   const { title } = req.params;
 
-  var url = "";
+  let url = "";
 
   // Check if we have this URL cached
   let connection = mysql.createConnection(config);
@@ -56,12 +56,12 @@ app.get('/movie/:title', (req, res) => {
       })
         .then(response => response.json())
         .then((titleData) => {
-          var id = titleData.imdbID;
+          let id = titleData.imdbID;
           while (id.charAt(0) === 't') {
             id = id.substring(1);
           }
           if (!id) {
-            res.status(418).send({ message: 'Movie not found, please check spelling.' });
+            res.status(418).send({ url: 'Movie not found, please check spelling.' });
             endConnection(connection);
           } else {
             fetch(`https://api.flixed.io/v1/movies/${id}?idType=imdb&apiKey=JvZosSdhe61qyfqx9cWtDmdng57IQHQJ`, {
@@ -83,7 +83,7 @@ app.get('/movie/:title', (req, res) => {
                   });
 
                   // get metadataId for the movie we just inserted                  
-                  var selectSql = `SELECT metadataId FROM ContentMetaData WHERE contentName=?`;
+                  let selectSql = `SELECT metadataId FROM ContentMetaData WHERE contentName=?`;
                   connection.query(selectSql, [title], function (err, results, fields) {
                     if (err) {
                       console.log(err.message);
@@ -137,7 +137,7 @@ app.get('/tvshow/:title', (req, res) => {
   const { title } = req.params;
 
   if (!title) {
-    res.status(418).send({ message: 'title needed' });
+    res.status(418).send({ url: 'title needed' });
   } else {
     // Get and cache the URL
     fetch(`http://www.omdbapi.com/?t=${title}&apikey=53dcb6b7`, {
@@ -148,12 +148,12 @@ app.get('/tvshow/:title', (req, res) => {
     })
       .then(response => response.json())
       .then((titleData) => {
-        var id = titleData.imdbID;
+        let id = titleData.imdbID;
         while (id.charAt(0) === 't') {
           id = id.substring(1);
         }
         if (!id) {
-          res.status(418).send({ message: 'Show not found, please check spelling.' });
+          res.status(418).send({ url: 'Show not found, please check spelling.' });
         } else {
           fetch(`https://api.flixed.io/v1/shows/${id}?idType=imdb&apiKey=JvZosSdhe61qyfqx9cWtDmdng57IQHQJ`, {
             method: 'GET',
@@ -179,13 +179,13 @@ app.get('/tvshow/:title', (req, res) => {
 
 app.get('/episode', (req, res) => {
 
-  var title = req.query.title;
+  let title = req.query.title;
   title = title.toUpperCase();
-  var seasonNum = req.query.seasonNum;
-  var episodeNum = req.query.episodeNum;
-  var episodeID = req.query.episodeID;
+  let seasonNum = req.query.seasonNum;
+  let episodeNum = req.query.episodeNum;
+  let episodeID = req.query.episodeID;
 
-  var url = "";
+  let url = "";
 
   // Check if we have this URL cached
   let connection = mysql.createConnection(config);
@@ -222,7 +222,7 @@ app.get('/episode', (req, res) => {
         .then((data) => {
           if (data.watchAvailability[0].contentId != null) {
             // cache the URL and associated metadata
-            var episodeUrl = `https://www.netflix.com/watch/${data.watchAvailability[0].contentId}`;
+            let episodeUrl = `https://www.netflix.com/watch/${data.watchAvailability[0].contentId}`;
             let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType, seasonNum, episodeNum) VALUES(?,?,'Netflix','EPISODE', ?, ?)`;
 
             connection.query(insertSql, [episodeUrl, title, seasonNum, episodeNum], function (err, results, fields) {
@@ -232,7 +232,7 @@ app.get('/episode', (req, res) => {
             });
 
             // get metadataId for the movie we just inserted
-            var selectSql = `SELECT metadataId FROM ContentMetaData WHERE contentName=? AND seasonNum=? AND episodeNum=?`;
+            let selectSql = `SELECT metadataId FROM ContentMetaData WHERE contentName=? AND seasonNum=? AND episodeNum=?`;
             connection.query(selectSql, [title, seasonNum, episodeNum], function (err, results, fields) {
               if (err) {
                 console.log(err.message);
@@ -271,9 +271,8 @@ app.get('/episode', (req, res) => {
 });
 
 app.get('/createPlaylist/', (req, res) => {
-
-  var name = req.query.name;
-  var email = req.query.email;
+  let name = req.query.name;
+  let email = req.query.email;
   email = email.toUpperCase();
 
   let connection = mysql.createConnection(config);
@@ -345,6 +344,52 @@ app.get('/getPlaylists/', (req, res) => {
       endConnection(connection);
 
       res.json({ code: 0, });
+    }
+  });
+});
+
+app.get('/addToPlaylist/', (req, res) => {
+  let playlistId = req.query.playlistId;
+  let metadataId = req.query.metadataId;
+
+  let connection = mysql.createConnection(config);
+
+  connection.connect(function (err) {
+    if (err) {
+      return console.error('error: ' + err.message);
+    }
+  });
+
+  let insertSql = `SELECT * FROM PlaylistContents WHERE playlistId=? AND metadataId=?`;
+
+  connection.query(insertSql, [playlistId, metadataId], function (err, results, fields) {
+    if (err) {
+      console.log(err.message);
+    }
+    if (results != null && results.length > 0) {
+      endConnection(connection);
+
+      res.json({ message: `Item already in selected playlist`, });
+    } else {
+      // Add to playlist
+      let insertSql = `INSERT INTO PlaylistContents(playlistId, metadataId) VALUES(?,?)`;
+      let successful = true;
+
+      connection.query(insertSql, [playlistId, metadataId], function (err, results, fields) {
+        if (err) {
+          console.log(err.message);
+          successful = false;
+        }
+      });
+
+      endConnection(connection);
+
+      // send the confirmation
+      if (successful) {
+        res.json({ message: `Successfully added to playlist`, });
+      } else {
+        res.json({ message: `Failed to add to playlist`, });
+      }
     }
   });
 });
