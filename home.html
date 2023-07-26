@@ -17,14 +17,18 @@
   function searchMovie() {
     titleElement = document.getElementById("title");
     title = titleElement.value;
-    title = title.replace(" ", "+");
+    // title = title.replace(" ", "+");
     fetch(`http://localhost:8080/movie/${title}`, {
       method: 'GET',
     })
       .then(res => res.json())
       .then((data) => {
         results = document.getElementById("resultsText");
-        results.innerText = data.url;
+        if (!data.url) {
+          results.innerText = "No URL found";
+        } else {
+          results.innerText = data.url;
+        }
         results.style.display = "block";
 
         updatePlaylists();
@@ -81,25 +85,38 @@
       episodes.remove(1);
     }
 
+    let anyLinkFound = false;
     for (let i = 0; i < data[seasonNum - 1].episodes.length; i++) {
-      var option = document.createElement("option");
-      option.text = `${i + 1}`;
-      option.value = `${i + 1}`;
-      episodes.add(option);
+      let url = data[seasonNum - 1].episodes[i].streamingInfo.us.netflix[0].watchLink;
+      if (url) {
+        let option = document.createElement("option");
+        option.value = `${url}`;
+        option.text = `${i + 1}`;
+        episodes.add(option);
+        anyLinkFound = true;
+      }
     }
-    episodes.style.display = "block";
+
+    if (anyLinkFound) {
+      episodes.style.display = "block";
+    } else {
+      results = document.getElementById("resultsText");
+      results.innerText = "No URL found";
+      results.style.display = "block";
+    }
   }
 
   function searchEpisode() {
     seasonNum = document.getElementById("seasonNum").value;
-    episodeNum = document.getElementById("episodeNum").value;
+    selectedIndex = document.getElementById("episodeNum").selectedIndex;
+    episodeNum = document.getElementById("episodeNum").options[selectedIndex].text;
+    episodeUrl = document.getElementById("episodeNum").value;
     data = JSON.parse(sessionStorage.currShow);
-    episodeID = data[seasonNum - 1].episodes[episodeNum - 1];
 
     titleElement = document.getElementById("title");
     title = titleElement.value;
     title = title.replace(" ", "+");
-    fetch(`http://localhost:8080/episode?title=${title}&seasonNum=${seasonNum}&episodeNum=${episodeNum}&episodeID=${episodeID}`, {
+    fetch(`http://localhost:8080/episode?title=${title}&seasonNum=${seasonNum}&episodeNum=${episodeNum}&episodeURL=${episodeUrl}`, {
       method: 'GET',
     })
       .then(res => res.json())

@@ -19,9 +19,7 @@ function endConnection(connection) {
 }
 
 app.get('/movie/:title', (req, res) => {
-
-  const { title } = req.params;
-
+  let title = req.params.title;
   let url = "";
 
   // Check if we have this URL cached
@@ -35,7 +33,7 @@ app.get('/movie/:title', (req, res) => {
 
   let cacheCheckSql = `SELECT url, metadataId FROM ContentMetaData WHERE contentName=?`;
 
-  connection.query(cacheCheckSql, [title], function (err, results, fields) {
+  connection.query(cacheCheckSql, [title.toUpperCase()], function (err, results) {
     if (err) {
       console.log(err.message);
     }
@@ -57,26 +55,25 @@ app.get('/movie/:title', (req, res) => {
         .then(response => response.json())
         .then((titleData) => {
           let id = titleData.imdbID;
-          while (id.charAt(0) === 't') {
-            id = id.substring(1);
-          }
           if (!id) {
             res.status(418).send({ url: 'Movie not found, please check spelling.' });
             endConnection(connection);
           } else {
-            fetch(`https://api.flixed.io/v1/movies/${id}?idType=imdb&apiKey=JvZosSdhe61qyfqx9cWtDmdng57IQHQJ`, {
+            fetch(`https://streaming-availability.p.rapidapi.com/v2/get/basic?country=us&imdb_id=${id}&output_language=en`, {
               method: 'GET',
               headers: {
                 accept: 'application/json',
+                'X-RapidAPI-Key': '5da6d8e7ccmshe3949e3d00dd52fp1a9d03jsn8999dd4dba35',
+                'X-RapidAPI-Host': 'streaming-availability.p.rapidapi.com'
               },
             })
               .then(res => res.json())
               .then((data) => {
-                if (data.watchAvailability[0].directUrls[0] != null) {
+                if (data.result.streamingInfo.us.netflix[0].watchLink != '') {
                   // cache the URL and associated metadata
                   let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType) VALUES(?,?,'Netflix','MOVIE')`;
 
-                  connection.query(insertSql, [data.watchAvailability[0].directUrls[0], title], function (err, results, fields) {
+                  connection.query(insertSql, [data.result.streamingInfo.us.netflix[0].watchLink, title.toUpperCase()], function (err, results) {
                     if (err) {
                       console.log(err.message);
                     }
@@ -84,7 +81,7 @@ app.get('/movie/:title', (req, res) => {
 
                   // get metadataId for the movie we just inserted                  
                   let selectSql = `SELECT metadataId FROM ContentMetaData WHERE contentName=?`;
-                  connection.query(selectSql, [title], function (err, results, fields) {
+                  connection.query(selectSql, [title.toUpperCase()], function (err, results) {
                     if (err) {
                       console.log(err.message);
                     }
@@ -93,7 +90,7 @@ app.get('/movie/:title', (req, res) => {
                     if (results != null && results.length > 0) {
                       // send the data back
                       res.json({
-                        url: `${data.watchAvailability[0].directUrls[0]}`,
+                        url: `${data.result.streamingInfo.us.netflix[0].watchLink}`,
                         metadataId: `${results[0].metadataId}`,
                       });
                     }
@@ -133,8 +130,7 @@ app.get('/movie/:title', (req, res) => {
 });
 
 app.get('/tvshow/:title', (req, res) => {
-
-  const { title } = req.params;
+  let title = req.params.title;
 
   if (!title) {
     res.status(418).send({ url: 'title needed' });
@@ -149,22 +145,21 @@ app.get('/tvshow/:title', (req, res) => {
       .then(response => response.json())
       .then((titleData) => {
         let id = titleData.imdbID;
-        while (id.charAt(0) === 't') {
-          id = id.substring(1);
-        }
         if (!id) {
           res.status(418).send({ url: 'Show not found, please check spelling.' });
         } else {
-          fetch(`https://api.flixed.io/v1/shows/${id}?idType=imdb&apiKey=JvZosSdhe61qyfqx9cWtDmdng57IQHQJ`, {
+          fetch(`https://streaming-availability.p.rapidapi.com/v2/get/basic?country=us&imdb_id=${id}&output_language=en`, {
             method: 'GET',
             headers: {
               accept: 'application/json',
+              'X-RapidAPI-Key': '5da6d8e7ccmshe3949e3d00dd52fp1a9d03jsn8999dd4dba35',
+              'X-RapidAPI-Host': 'streaming-availability.p.rapidapi.com'
             },
           })
             .then(res => res.json())
             .then((data) => {
               // send the data back
-              res.json(data.seasons);
+              res.json(data.result.seasons);
             })
             .catch((error) => {
               res.status(418).send({ message: error.message });
@@ -183,7 +178,7 @@ app.get('/episode', (req, res) => {
   title = title.toUpperCase();
   let seasonNum = req.query.seasonNum;
   let episodeNum = req.query.episodeNum;
-  let episodeID = req.query.episodeID;
+  let episodeUrl = req.query.episodeURL;
 
   let url = "";
 
@@ -198,7 +193,7 @@ app.get('/episode', (req, res) => {
 
   let cacheCheckSql = `SELECT url, metadataId FROM ContentMetaData WHERE contentName=? AND seasonNum=? AND episodeNum=?`;
 
-  connection.query(cacheCheckSql, [title, seasonNum, episodeNum], function (err, results, fields) {
+  connection.query(cacheCheckSql, [title, seasonNum, episodeNum], function (err, results) {
     if (err) {
       console.log(err.message);
     }
@@ -211,61 +206,30 @@ app.get('/episode', (req, res) => {
 
       endConnection(connection);
     } else {
-      // Get and cache the URL
-      fetch(`https://api.flixed.io/v1/episodes/${episodeID}?idType=flixed&apiKey=JvZosSdhe61qyfqx9cWtDmdng57IQHQJ`, {
-        method: 'GET',
-        headers: {
-          accept: 'application/json',
-        },
-      })
-        .then(res => res.json())
-        .then((data) => {
-          if (data.watchAvailability[0].contentId != null) {
-            // cache the URL and associated metadata
-            let episodeUrl = `https://www.netflix.com/watch/${data.watchAvailability[0].contentId}`;
-            let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType, seasonNum, episodeNum) VALUES(?,?,'Netflix','EPISODE', ?, ?)`;
+      // Cache the URL and associated metadata
+      let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType, seasonNum, episodeNum) VALUES(?,?,'Netflix','EPISODE', ?, ?)`;
+      connection.query(insertSql, [episodeUrl, title, seasonNum, episodeNum], function (err, results) {
+        if (err) {
+          console.log(err.message);
+        }
+      });
 
-            connection.query(insertSql, [episodeUrl, title, seasonNum, episodeNum], function (err, results, fields) {
-              if (err) {
-                console.log(err.message);
-              }
-            });
+      // get metadataId for the movie we just inserted
+      let selectSql = `SELECT metadataId FROM ContentMetaData WHERE contentName=? AND seasonNum=? AND episodeNum=?`;
+      connection.query(selectSql, [title, seasonNum, episodeNum], function (err, results) {
+        if (err) {
+          console.log(err.message);
+        }
+        endConnection(connection);
 
-            // get metadataId for the movie we just inserted
-            let selectSql = `SELECT metadataId FROM ContentMetaData WHERE contentName=? AND seasonNum=? AND episodeNum=?`;
-            connection.query(selectSql, [title, seasonNum, episodeNum], function (err, results, fields) {
-              if (err) {
-                console.log(err.message);
-              }
-              endConnection(connection);
-
-              if (results != null && results.length > 0) {
-                // send the data back
-                res.json({
-                  url: `${episodeUrl}`,
-                  metadataId: `${results[0].metadataId}`,
-                });
-              }
-            });
-          } else {
-            endConnection(connection);
-
-            // send back response
-            res.json({
-              url: `no url found in API`,
-              metadataId: -1,
-            });
-          }
-        })
-        .catch((error) => {
-          res.status(418).send({ message: error.message });
-
-          connection.ping((err) => {
-            if (!err) {
-              endConnection(connection);
-            }
-          })
-        });
+        if (results != null && results.length > 0) {
+          // send the data back
+          res.json({
+            url: `${episodeUrl}`,
+            metadataId: `${results[0].metadataId}`,
+          });
+        }
+      });
     }
   });
 });
@@ -285,7 +249,7 @@ app.get('/createPlaylist/', (req, res) => {
 
   let cacheCheckSql = `SELECT * FROM Playlists WHERE userDefinedName=? AND email=?`;
 
-  connection.query(cacheCheckSql, [name, email], function (err, results, fields) {
+  connection.query(cacheCheckSql, [name, email], function (err, results) {
     if (err) {
       console.log(err.message);
     }
@@ -298,7 +262,7 @@ app.get('/createPlaylist/', (req, res) => {
       let insertSql = `INSERT INTO Playlists(userDefinedName, email) VALUES(?,?)`;
       let successful = true;
 
-      connection.query(insertSql, [name, email], function (err, results, fields) {
+      connection.query(insertSql, [name, email], function (err, results) {
         if (err) {
           console.log(err.message);
           successful = false;
@@ -328,7 +292,7 @@ app.get('/getPlaylists/', (req, res) => {
 
   let fetchSql = `SELECT userDefinedName, playlistId FROM Playlists`;
 
-  connection.query(fetchSql, function (err, results, fields) {
+  connection.query(fetchSql, function (err, results) {
     if (err) {
       console.log(err.message);
     }
@@ -362,7 +326,7 @@ app.get('/addToPlaylist/', (req, res) => {
 
   let insertSql = `SELECT * FROM PlaylistContents WHERE playlistId=? AND metadataId=?`;
 
-  connection.query(insertSql, [playlistId, metadataId], function (err, results, fields) {
+  connection.query(insertSql, [playlistId, metadataId], function (err, results) {
     if (err) {
       console.log(err.message);
     }
@@ -375,7 +339,7 @@ app.get('/addToPlaylist/', (req, res) => {
       let insertSql = `INSERT INTO PlaylistContents(playlistId, metadataId) VALUES(?,?)`;
       let successful = true;
 
-      connection.query(insertSql, [playlistId, metadataId], function (err, results, fields) {
+      connection.query(insertSql, [playlistId, metadataId], function (err, results) {
         if (err) {
           console.log(err.message);
           successful = false;
