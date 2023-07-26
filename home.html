@@ -17,7 +17,6 @@
   function searchMovie() {
     titleElement = document.getElementById("title");
     title = titleElement.value;
-    // title = title.replace(" ", "+");
     fetch(`http://localhost:8080/movie/${title}`, {
       method: 'GET',
     })
@@ -31,7 +30,7 @@
         }
         results.style.display = "block";
 
-        updatePlaylists();
+        updatePlaylists("playlistSelect");
         document.getElementById("playlistFeatures").removeAttribute("hidden");
         sessionStorage.metadataId = data.metadataId;
       })
@@ -45,7 +44,6 @@
   function searchTvShow() {
     titleElement = document.getElementById("title");
     title = titleElement.value;
-    title = title.replace(" ", "+");
     fetch(`http://localhost:8080/tvshow/${title}`, {
       method: 'GET',
     })
@@ -115,7 +113,6 @@
 
     titleElement = document.getElementById("title");
     title = titleElement.value;
-    title = title.replace(" ", "+");
     fetch(`http://localhost:8080/episode?title=${title}&seasonNum=${seasonNum}&episodeNum=${episodeNum}&episodeURL=${episodeUrl}`, {
       method: 'GET',
     })
@@ -125,7 +122,7 @@
         results.innerText = data.url;
         results.style.display = "block";
 
-        updatePlaylists();
+        updatePlaylists("playlistSelect");
         document.getElementById("playlistFeatures").removeAttribute("hidden");
         sessionStorage.metadataId = data.metadataId;
       })
@@ -161,11 +158,17 @@
     document.getElementById("playlistFeatures").setAttribute("hidden", "hidden");
   }
 
-  function openPLCreate() {
-    document.getElementById("playlistManagementSection").removeAttribute("hidden");
-    document.getElementById("openPLCreate").style.display = "none";
-    document.getElementById("email").value = '';
-    document.getElementById("playlistName").value = '';
+  function togglePLCreate() {
+    if (document.getElementById("togglePLCreate").innerText.includes("Open")) {
+      document.getElementById("playlistManagementSection").removeAttribute("hidden");
+      document.getElementById("togglePLCreate").innerText = "Close Playlist Management Section";
+      document.getElementById("email").value = '';
+      document.getElementById("playlistName").value = '';
+      updatePlaylists("playlistDeleteSelect");
+    } else {
+      document.getElementById("playlistManagementSection").setAttribute("hidden", "hidden");
+      document.getElementById("togglePLCreate").innerText = "Open Playlist Management Section";
+    }
   }
 
   function createPlaylist() {
@@ -176,7 +179,7 @@
     } else if (name === "") {
       alert("Name field cannot be blank");
     } else {
-      document.getElementById("openPLCreate").style.display = "block";
+      document.getElementById("togglePLCreate").innerText = "Open Playlist Management Section";
       document.getElementById("playlistManagementSection").setAttribute("hidden", "hidden");
       email = document.getElementById("email").value;
       playlistName = document.getElementById("playlistName").value;
@@ -191,7 +194,11 @@
           results.style.display = "block";
 
           if (!document.getElementById("playlistFeatures").hasAttribute("hidden")) {
-            updatePlaylists();
+            updatePlaylists("playlistSelect");
+          }
+
+          if (!document.getElementById("playlistDeleteSelect").hasAttribute("hidden")) {
+            updatePlaylists("playlistDeleteSelect");
           }
         })
         .catch((error) => {
@@ -202,13 +209,13 @@
     }
   }
 
-  function updatePlaylists() {
+  function updatePlaylists(dropdownToPopulate) {
     fetch(`http://localhost:8080/getPlaylists/`, {
       method: 'GET',
     })
       .then(res => res.json())
       .then((data) => {
-        playlists = document.getElementById("playlistSelect");
+        playlists = document.getElementById(dropdownToPopulate);
         while (playlists.options.length > 1) {
           playlists.remove(1);
         }
@@ -235,6 +242,10 @@
 
   function addToPlaylist() {
     playlistId = document.getElementById("playlistSelect").value;
+    if (playlistId === "-") {
+      alert("Please select a playlist");
+      return;
+    }
 
     fetch(`http://localhost:8080/addToPlaylist?playlistId=${playlistId}&metadataId=${sessionStorage.metadataId}`, {
       method: 'GET',
@@ -283,18 +294,25 @@
     </select>
   </div>
 
-  <button id="openPLCreate" type="button" onclick="openPLCreate()">Open Playlist Management Section</button>
+  <button id="togglePLCreate" type="button" onclick="togglePLCreate()">Open Playlist Management Section</button>
   <div id="playlistManagementSection" hidden="hidden">
-    Enter email: <input id="email" type="text" placeholder="Enter email...">
-    Enter playlist name: <input id="playlistName" placeholder="Enter playlist name">
-    <button id="createPlaylist" type="button" onclick="createPlaylist()">Create Playlist</button>
+    <div id="playlistCreationSection" style='display: block'>
+      Enter email: <input id="email" type="text" placeholder="Enter email...">
+      Enter playlist name: <input id="playlistName" placeholder="Enter playlist name">
+      <button id="createPlaylist" type="button" onclick="createPlaylist()">Create Playlist</button>
+    </div>
+    <div id="playlistDeletionSection" style='display: block'>
+      <select name="playlistDeleteSelect" id="playlistDeleteSelect" data-role="slider">
+        <option value="-" id="nullPlaylist">Select a Playlist to Delete</option>
+      </select>
+      <button id="deletePlaylist" type="button" onclick="deletePlaylist()">Delete Playlist</button>
+    </div>
   </div>
 
   <p id="resultsText" style='display: none'>Test</p>
 
   <!--TODO:
-        3. give a pop up window saying that you have to select a playlist when addToPlaylist is clicked without one selected
-        4. delete playlist button under playlist management section, open with separate button and fetch playlist names when that happens to populate new dropdown
+        1. delete playlist button under playlist management section, open with separate button and fetch playlist names when that happens to populate new dropdown
           a. ask for confirmation when you click delete
   -->
   <div id="playlistFeatures" hidden="hidden">
@@ -309,3 +327,8 @@
 </body>
 
 </html>
+
+<!---TODO:
+        1. add a dropdown menu for selecting which streaming service you are searching on
+        2. "any" option?
+-->
