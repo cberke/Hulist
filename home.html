@@ -158,6 +158,11 @@
     document.getElementById("playlistFeatures").setAttribute("hidden", "hidden");
   }
 
+  function resetPlaylistManagement() {
+    document.getElementById("togglePLCreate").innerText = "Open Playlist Management Section";
+    document.getElementById("playlistManagementSection").setAttribute("hidden", "hidden");
+  }
+
   function togglePLCreate() {
     if (document.getElementById("togglePLCreate").innerText.includes("Open")) {
       document.getElementById("playlistManagementSection").removeAttribute("hidden");
@@ -166,8 +171,7 @@
       document.getElementById("playlistName").value = '';
       updatePlaylists("playlistDeleteSelect");
     } else {
-      document.getElementById("playlistManagementSection").setAttribute("hidden", "hidden");
-      document.getElementById("togglePLCreate").innerText = "Open Playlist Management Section";
+      resetPlaylistManagement();
     }
   }
 
@@ -179,8 +183,7 @@
     } else if (name === "") {
       alert("Name field cannot be blank");
     } else {
-      document.getElementById("togglePLCreate").innerText = "Open Playlist Management Section";
-      document.getElementById("playlistManagementSection").setAttribute("hidden", "hidden");
+      resetPlaylistManagement();
       email = document.getElementById("email").value;
       playlistName = document.getElementById("playlistName").value;
 
@@ -263,6 +266,35 @@
       });
   }
 
+  function deletePlaylist() {
+    playlistId = document.getElementById("playlistDeleteSelect").value;
+    if (playlistId === "-") {
+      alert("Please select a playlist");
+      return;
+    }
+
+    let selectedIndex = document.getElementById("playlistDeleteSelect").selectedIndex;
+    let playlistName = document.getElementById("playlistDeleteSelect").options[selectedIndex].text;
+    if (confirm(`Please confirm you want to delete the playlist: ${playlistName}`) === true) {
+      resetPlaylistManagement();
+
+      fetch(`http://localhost:8080/deletePlaylist?playlistId=${playlistId}`, {
+        method: 'GET',
+      })
+        .then(res => res.json())
+        .then((data) => {
+          results = document.getElementById("playlistActionResults");
+          results.innerText = data.message;
+          results.style.display = "block";
+        })
+        .catch((error) => {
+          results = document.getElementById("playlistActionResults");
+          results.innerText = error.message;
+          results.style.display = "block";
+        });
+    }
+  }
+
 </script>
 
 <body>
@@ -311,10 +343,6 @@
 
   <p id="resultsText" style='display: none'>Test</p>
 
-  <!--TODO:
-        1. delete playlist button under playlist management section, open with separate button and fetch playlist names when that happens to populate new dropdown
-          a. ask for confirmation when you click delete
-  -->
   <div id="playlistFeatures" hidden="hidden">
     <select name="playlistSelect" id="playlistSelect" data-role="slider">
       <option value="-" id="nullPlaylist">Select a Playlist</option>

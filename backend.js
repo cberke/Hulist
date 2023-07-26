@@ -324,9 +324,9 @@ app.get('/addToPlaylist/', (req, res) => {
     }
   });
 
-  let insertSql = `SELECT * FROM PlaylistContents WHERE playlistId=? AND metadataId=?`;
+  let selectSql = `SELECT * FROM PlaylistContents WHERE playlistId=? AND metadataId=?`;
 
-  connection.query(insertSql, [playlistId, metadataId], function (err, results) {
+  connection.query(selectSql, [playlistId, metadataId], function (err, results) {
     if (err) {
       console.log(err.message);
     }
@@ -354,6 +354,60 @@ app.get('/addToPlaylist/', (req, res) => {
       } else {
         res.json({ message: `Failed to add to playlist`, });
       }
+    }
+  });
+});
+
+app.get('/deletePlaylist/', (req, res) => {
+  let playlistId = req.query.playlistId;
+
+  let connection = mysql.createConnection(config);
+
+  connection.connect(function (err) {
+    if (err) {
+      return console.error('error: ' + err.message);
+    }
+  });
+
+  let selectSql = `SELECT * FROM Playlists WHERE playlistId=?`;
+
+  connection.query(selectSql, [playlistId], function (err, results) {
+    if (err) {
+      console.log(err.message);
+    }
+    if (results != null && results.length > 0) {
+      // Delete playlist contents
+      let deleteContentsSql = `DELETE FROM PlaylistContents WHERE playlistId=?`;
+      let successful = true;
+
+      connection.query(deleteContentsSql, [playlistId], function (err, results) {
+        if (err) {
+          console.log(err.message);
+          successful = false;
+        }
+      });
+
+      let deletePlaylistSql = `DELETE FROM Playlists WHERE playlistId=?`;
+
+      connection.query(deletePlaylistSql, [playlistId], function (err, results) {
+        if (err) {
+          console.log(err.message);
+          successful = false;
+        }
+      });
+
+      endConnection(connection);
+
+      // send the confirmation
+      if (successful) {
+        res.json({ message: `Successfully deleted playlist`, });
+      } else {
+        res.json({ message: `Failed to delete playlist`, });
+      }
+    } else {
+      endConnection(connection);
+
+      res.json({ message: `Playlist not found`, });
     }
   });
 });
