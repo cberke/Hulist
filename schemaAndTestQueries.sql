@@ -1,7 +1,14 @@
 USE Streamlist;
 
-SHOW TABLES
+SHOW TABLES;
 
+SELECT * FROM Playlists WHERE userDefinedName='testName' AND email='testEmail';
+
+DELETE FROM ContentMetaData where contentName;
+
+SELECT metadataId FROM ContentMetaData WHERE contentName='THE GOOD PLACE' AND seasonNum=4 AND episodeNum=8 AND streamingService='netflix';
+
+ALTER TABLE ContentMetaData MODIFY COLUMN streamingService ENUM('netflix', 'hulu', 'prime', 'peacock', 'hbo');
 /*
 Table Creation and Schema
 
@@ -16,7 +23,7 @@ CREATE TABLE ContentMetaData(
 metadataId INT NOT NULL AUTO_INCREMENT,
 url BLOB NOT NULL,
 contentName VARCHAR(255) NOT NULL,
-streamingService ENUM('NETFLIX', 'HULU') NOT NULL,
+streamingService ENUM('netflix', 'hulu', 'prime', 'peacock', 'hbo') NOT NULL,
 contentType ENUM('MOVIE', 'SHOW') NOT NULL,
 seasonNum INT,
 episodeNum INT,

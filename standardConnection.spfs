@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ContentFilters</key>
+	<dict/>
+	<key>auto_connect</key>
+	<true/>
+	<key>data</key>
+	<dict>
+		<key>connection</key>
+		<dict>
+			<key>allowDataLocalInfile</key>
+			<integer>0</integer>
+			<key>database</key>
+			<string>Streamlist</string>
+			<key>enableClearTextPlugin</key>
+			<integer>0</integer>
+			<key>host</key>
+			<string>127.0.0.1</string>
+			<key>name</key>
+			<string>root@127.0.0.1</string>
+			<key>rdbms_type</key>
+			<string>mysql</string>
+			<key>sslCACertFileLocation</key>
+			<string></string>
+			<key>sslCACertFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>sslCertificateFileLocation</key>
+			<string></string>
+			<key>sslCertificateFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>sslKeyFileLocation</key>
+			<string></string>
+			<key>sslKeyFileLocationEnabled</key>
+			<integer>0</integer>
+			<key>type</key>
+			<string>SPTCPIPConnection</string>
+			<key>useSSL</key>
+			<integer>0</integer>
+			<key>user</key>
+			<string>root</string>
+		</dict>
+		<key>session</key>
+		<dict>
+			<key>connectionEncoding</key>
+			<string>utf8mb4</string>
+			<key>contentFilterV2</key>
+			<dict>
+				<key>children</key>
+				<array/>
+				<key>filterClass</key>
+				<string>groupNode</string>
+				<key>isConjunction</key>
+				<true/>
+			</dict>
+			<key>contentPageNumber</key>
+			<integer>1</integer>
+			<key>contentSelection</key>
+			<data>
+			YnBsaXN0MDDUAQIDBAUGBwpYJHZlcnNpb25ZJGFyY2hpdmVyVCR0
+			b3BYJG9iamVjdHMSAAGGoF8QD05TS2V5ZWRBcmNoaXZlctEICVRk
+			YXRhgAGtCwwZGhscHSEoLDA0OFUkbnVsbNMNDg8QFBhXTlMua2V5
+			c1pOUy5vYmplY3RzViRjbGFzc6MREhOAAoADgASjFRYXgAWABoAI
+			gAxUdHlwZVRyb3dzVGtleXNfECZTZWxlY3Rpb25EZXRhaWxUeXBl
+			UHJpbWFyeUtleWVkRGV0YWlsc9MNDg8eHyCgoIAH0iIjJCVaJGNs
+			YXNzbmFtZVgkY2xhc3Nlc18QE05TTXV0YWJsZURpY3Rpb25hcnmj
+			JCYnXE5TRGljdGlvbmFyeVhOU09iamVjdNIODykroSqACYAL0g8t
+			Li9ZTlMuc3RyaW5ngApabWV0YWRhdGFJZNIiIzEyXxAPTlNNdXRh
+			YmxlU3RyaW5nozEzJ1hOU1N0cmluZ9IiIzU2Xk5TTXV0YWJsZUFy
+			cmF5ozU3J1dOU0FycmF50iIjJjmiJicACAARABoAJAApADIANwBJ
+			AEwAUQBTAGEAZwBuAHYAgQCIAIwAjgCQAJIAlgCYAJoAnACeAKMA
+			qACtANYA3QDeAN8A4QDmAPEA+gEQARQBIQEqAS8BMQEzATUBOgFE
+			AUYBUQFWAWgBbAF1AXoBiQGNAZUBmgAAAAAAAAIBAAAAAAAAADoA
+			AAAAAAAAAAAAAAAAAAGd
+			</data>
+			<key>contentSortColIsAsc</key>
+			<true/>
+			<key>contentViewport</key>
+			<string>{{0, 0}, {1513, 910}}</string>
+			<key>isToolbarVisible</key>
+			<true/>
+			<key>queries</key>
+			<string>USE Streamlist;
+
+SHOW TABLES;
+
+SELECT * FROM Playlists WHERE userDefinedName='testName' AND email='testEmail';
+
+DELETE FROM ContentMetaData where contentName;
+
+SELECT metadataId FROM ContentMetaData WHERE contentName='THE GOOD PLACE' AND seasonNum=4 AND episodeNum=8 AND streamingService='netflix';
+
+ALTER TABLE ContentMetaData MODIFY COLUMN streamingService ENUM('netflix', 'hulu', 'prime', 'peacock', 'hbo');
+/*
+Table Creation and Schema
+
+CREATE TABLE Playlists(
+playlistId INT NOT NULL AUTO_INCREMENT,
+userDefinedName VARCHAR(255) NOT NULL,
+email VARCHAR(255) NOT NULL,
+PRIMARY KEY (playlistId)
+);
+
+CREATE TABLE ContentMetaData(
+metadataId INT NOT NULL AUTO_INCREMENT,
+url BLOB NOT NULL,
+contentName VARCHAR(255) NOT NULL,
+streamingService ENUM('netflix', 'hulu', 'prime', 'peacock', 'hbo') NOT NULL,
+contentType ENUM('MOVIE', 'SHOW') NOT NULL,
+seasonNum INT,
+episodeNum INT,
+PRIMARY KEY (metadataId)
+);
+
+CREATE TABLE PlaylistContents(
+id INT NOT NULL AUTO_INCREMENT,
+playlistId INT NOT NULL,
+metadataId INT NOT NULL,
+PRIMARY KEY (id),
+FOREIGN KEY (playlistId) REFERENCES Playlists(playlistId),
+FOREIGN KEY (metadataId) REFERENCES ContentMetaData(metadataId)
+);</string>
+			<key>table</key>
+			<string>ContentMetaData</string>
+			<key>view</key>
+			<string>SP_VIEW_CUSTOMQUERY</string>
+			<key>windowVerticalDividerPosition</key>
+			<real>214</real>
+		</dict>
+	</dict>
+	<key>encrypted</key>
+	<false/>
+	<key>format</key>
+	<string>connection</string>
+	<key>queryFavorites</key>
+	<array/>
+	<key>rdbms_type</key>
+	<string>mysql</string>
+	<key>rdbms_version</key>
+	<string>8.0.32</string>
+	<key>version</key>
+	<integer>1</integer>
+</dict>
+</plist>

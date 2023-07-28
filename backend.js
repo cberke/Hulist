@@ -18,9 +18,9 @@ function endConnection(connection) {
   });
 }
 
-app.get('/movie/:title', (req, res) => {
-  let title = req.params.title;
-  let url = "";
+app.get('/movie/', (req, res) => {
+  let title = req.query.title;
+  let service = req.query.service;
 
   // Check if we have this URL cached
   let connection = mysql.createConnection(config);
@@ -31,9 +31,9 @@ app.get('/movie/:title', (req, res) => {
     }
   });
 
-  let cacheCheckSql = `SELECT url, metadataId FROM ContentMetaData WHERE contentName=?`;
+  let cacheCheckSql = `SELECT url, metadataId FROM ContentMetaData WHERE contentName=? AND streamingService=?`;
 
-  connection.query(cacheCheckSql, [title.toUpperCase()], function (err, results) {
+  connection.query(cacheCheckSql, [title.toUpperCase(), service], function (err, results) {
     if (err) {
       console.log(err.message);
     }
@@ -69,11 +69,13 @@ app.get('/movie/:title', (req, res) => {
             })
               .then(res => res.json())
               .then((data) => {
-                if (data.result.streamingInfo.us.netflix[0].watchLink != '') {
-                  // cache the URL and associated metadata
-                  let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType) VALUES(?,?,'Netflix','MOVIE')`;
+                if (data.result.streamingInfo.us[service][0].watchLink != '') {
+                  let watchLink = data.result.streamingInfo.us[service][0].watchLink
 
-                  connection.query(insertSql, [data.result.streamingInfo.us.netflix[0].watchLink, title.toUpperCase()], function (err, results) {
+                  // cache the URL and associated metadata
+                  let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType) VALUES(?,?,?,'MOVIE')`;
+
+                  connection.query(insertSql, [watchLink, title.toUpperCase(), service], function (err, results) {
                     if (err) {
                       console.log(err.message);
                     }
@@ -90,7 +92,7 @@ app.get('/movie/:title', (req, res) => {
                     if (results != null && results.length > 0) {
                       // send the data back
                       res.json({
-                        url: `${data.result.streamingInfo.us.netflix[0].watchLink}`,
+                        url: `${watchLink}`,
                         metadataId: `${results[0].metadataId}`,
                       });
                     }
@@ -129,8 +131,8 @@ app.get('/movie/:title', (req, res) => {
   });
 });
 
-app.get('/tvshow/:title', (req, res) => {
-  let title = req.params.title;
+app.get('/tvshow/', (req, res) => {
+  let title = req.query.title;
 
   if (!title) {
     res.status(418).send({ url: 'title needed' });
@@ -179,8 +181,7 @@ app.get('/episode', (req, res) => {
   let seasonNum = req.query.seasonNum;
   let episodeNum = req.query.episodeNum;
   let episodeUrl = req.query.episodeURL;
-
-  let url = "";
+  let service = req.query.service;
 
   // Check if we have this URL cached
   let connection = mysql.createConnection(config);
@@ -191,7 +192,7 @@ app.get('/episode', (req, res) => {
     }
   });
 
-  let cacheCheckSql = `SELECT url, metadataId FROM ContentMetaData WHERE contentName=? AND seasonNum=? AND episodeNum=?`;
+  let cacheCheckSql = `SELECT url, metadataId FROM ContentMetaData WHERE contentName=? AND seasonNum=? AND episodeNum=? AND streamingService=?`;
 
   connection.query(cacheCheckSql, [title, seasonNum, episodeNum], function (err, results) {
     if (err) {
@@ -207,8 +208,8 @@ app.get('/episode', (req, res) => {
       endConnection(connection);
     } else {
       // Cache the URL and associated metadata
-      let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType, seasonNum, episodeNum) VALUES(?,?,'Netflix','EPISODE', ?, ?)`;
-      connection.query(insertSql, [episodeUrl, title, seasonNum, episodeNum], function (err, results) {
+      let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType, seasonNum, episodeNum) VALUES(?,?,?,'EPISODE', ?, ?)`;
+      connection.query(insertSql, [episodeUrl, title, seasonNum, episodeNum, service], function (err, results) {
         if (err) {
           console.log(err.message);
         }
