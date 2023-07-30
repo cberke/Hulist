@@ -338,6 +338,10 @@ function removeAllPlaylistContentElements() {
   }
 }
 
+function playPlaylist(startingIndex) {
+  window.open(`${sessionStorage.playlistUrls.split(",")[startingIndex]}`, '_blank');
+}
+
 function displayPlaylist() {
   playlistElement = document.getElementById("playlistSelect");
   playlistId = playlistElement.value;
@@ -354,7 +358,11 @@ function displayPlaylist() {
         return;
       }
 
+      let playlistUrls = [];
+
       for (let i = 0; i < data.length; i++) {
+        playlistUrls[i] = data[i].url;
+
         const contentInfo = document.createElement("label");
         if (data[i].contentType === "MOVIE") {
           contentInfo.innerText = `${data[i].contentName}: ${data[i].url}`;
@@ -364,10 +372,10 @@ function displayPlaylist() {
         contentInfo.style.paddingRight = '10px';
         contentInfo.style.lineHeight = '3';
 
-        // TODO: add code for play button here, make sure to add it to the call to removeFromPlaylist
         const playEpisode = document.createElement("button");
         playEpisode.innerText = 'Play Episode';
         playEpisode.style.marginRight = '10px';
+        playEpisode.onclick = function () { playPlaylist(i); };
 
         const lineBreak = document.createElement("br");
 
@@ -380,6 +388,10 @@ function displayPlaylist() {
         playlistContentsSection.appendChild(playEpisode);
         playlistContentsSection.appendChild(removeButton);
         playlistContentsSection.appendChild(lineBreak);
+      }
+
+      if (data.length > 0) {
+        sessionStorage.playlistUrls = playlistUrls;
       }
 
       document.getElementById("playlistContentsSection").style.display = "block"
