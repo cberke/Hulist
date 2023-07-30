@@ -31,7 +31,9 @@ function searchMovie() {
 function searchTvShow() {
   titleElement = document.getElementById("title");
   title = titleElement.value;
-  fetch(`http://localhost:8080/tvshow?title=${title}`, {
+  serviceElement = document.getElementById("streamingServiceSelect");
+  service = serviceElement.value;
+  fetch(`http://localhost:8080/tvshow?title=${title}&service=${service}`, {
     method: 'GET',
   })
     .then(res => res.json())
@@ -316,10 +318,6 @@ function removeFromPlaylist(metadataId, playlistId, elementsToRemove) {
   })
     .then(res => res.json())
     .then((data) => {
-      results = document.getElementById("resultsText");
-      results.innerText = data.message;
-      results.style.display = "block";
-
       if (data.code === 1) {
         for (let i = 0; i < elementsToRemove.length; i++) {
           elementsToRemove[i].remove();
@@ -361,21 +359,25 @@ function displayPlaylist() {
         if (data[i].contentType === "MOVIE") {
           contentInfo.innerText = `${data[i].contentName}: ${data[i].url}`;
         } else {
-          contentInfo.innerText = `${data[i].contentName} Season ${data[i].seasonNum} Episode ${data[i].episodeNum}: ${data[i].url}`;
+          contentInfo.innerText = `${data[i].contentName} S${data[i].seasonNum} E${data[i].episodeNum} ${data[i].episodeName}: ${data[i].url}`;
         }
-        contentInfo.style.padding = '10px';
+        contentInfo.style.paddingRight = '10px';
         contentInfo.style.lineHeight = '3';
 
         // TODO: add code for play button here, make sure to add it to the call to removeFromPlaylist
+        const playEpisode = document.createElement("button");
+        playEpisode.innerText = 'Play Episode';
+        playEpisode.style.marginRight = '10px';
 
         const lineBreak = document.createElement("br");
 
         const removeButton = document.createElement("button");
         removeButton.innerText = "Remove from Playlist";
-        removeButton.onclick = function () { removeFromPlaylist(data[i].metadataId, playlistId, [contentInfo, removeButton, lineBreak]); };
+        removeButton.onclick = function () { removeFromPlaylist(data[i].metadataId, playlistId, [contentInfo, playEpisode, removeButton, lineBreak]); };
 
         const playlistContentsSection = document.getElementById("playlistContentsSection");
         playlistContentsSection.appendChild(contentInfo);
+        playlistContentsSection.appendChild(playEpisode);
         playlistContentsSection.appendChild(removeButton);
         playlistContentsSection.appendChild(lineBreak);
       }

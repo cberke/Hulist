@@ -56,7 +56,7 @@ app.get('/movie/', (req, res) => {
         .then((titleData) => {
           let id = titleData.imdbID;
           if (!id) {
-            res.status(418).send({ message: 'Movie not found, please check spelling.' });
+            res.status(418).send({ message: 'Movie not found on selected streaming platform, please check spelling.' });
             endConnection(connection);
           } else {
             fetch(`https://streaming-availability.p.rapidapi.com/v2/get/basic?country=us&imdb_id=${id}&output_language=en`, {
@@ -69,7 +69,9 @@ app.get('/movie/', (req, res) => {
             })
               .then(res => res.json())
               .then((data) => {
-                if (data.result.streamingInfo.us[service][0].watchLink != '' && data.result.type === 'movie') {
+                if (data.result.streamingInfo.us[service]
+                  && data.result.streamingInfo.us[service][0].watchLink
+                  && data.result.type === 'movie') {
                   let watchLink = data.result.streamingInfo.us[service][0].watchLink
 
                   // cache the URL and associated metadata
@@ -102,7 +104,7 @@ app.get('/movie/', (req, res) => {
 
                   // send back response
                   res.json({
-                    message: `Movie not found, please check spelling`,
+                    message: `Movie not found on selected streaming platform, please check spelling`,
                     metadataId: -1,
                   });
                 }
@@ -133,6 +135,7 @@ app.get('/movie/', (req, res) => {
 
 app.get('/tvshow/', (req, res) => {
   let title = req.query.title;
+  let service = req.query.service;
 
   if (!title) {
     res.status(418).send({ url: 'title needed' });
@@ -148,7 +151,7 @@ app.get('/tvshow/', (req, res) => {
       .then((titleData) => {
         let id = titleData.imdbID;
         if (!id) {
-          res.status(418).send({ message: 'Show not found, please check spelling.' });
+          res.status(418).send({ message: 'Show not found on selected streaming platform, please check spelling.' });
         } else {
           fetch(`https://streaming-availability.p.rapidapi.com/v2/get/basic?country=us&imdb_id=${id}&output_language=en`, {
             method: 'GET',
@@ -161,10 +164,10 @@ app.get('/tvshow/', (req, res) => {
             .then(res => res.json())
             .then((data) => {
               // send the data back
-              if (data.result.type != '' && data.result.type === 'series') {
+              if (data.result.type && data.result.type === 'series' && data.result.streamingInfo.us[service]) {
                 res.json(data.result.seasons);
               } else {
-                res.json({ message: 'TV show not found, please check spelling' })
+                res.json({ message: 'TV show not found on selected streaming platform, please check spelling' })
               }
             })
             .catch((error) => {
