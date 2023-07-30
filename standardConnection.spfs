@@ -60,20 +60,22 @@
 			<data>
 			YnBsaXN0MDDUAQIDBAUGBwpYJHZlcnNpb25ZJGFyY2hpdmVyVCR0
 			b3BYJG9iamVjdHMSAAGGoF8QD05TS2V5ZWRBcmNoaXZlctEICVRk
-			YXRhgAGtCwwZGhscHSEoLDA0OFUkbnVsbNMNDg8QFBhXTlMua2V5
-			c1pOUy5vYmplY3RzViRjbGFzc6MREhOAAoADgASjFRYXgAWABoAI
-			gAxUdHlwZVRyb3dzVGtleXNfECZTZWxlY3Rpb25EZXRhaWxUeXBl
-			UHJpbWFyeUtleWVkRGV0YWlsc9MNDg8eHyCgoIAH0iIjJCVaJGNs
-			YXNzbmFtZVgkY2xhc3Nlc18QE05TTXV0YWJsZURpY3Rpb25hcnmj
-			JCYnXE5TRGljdGlvbmFyeVhOU09iamVjdNIODykroSqACYAL0g8t
-			Li9ZTlMuc3RyaW5ngApabWV0YWRhdGFJZNIiIzEyXxAPTlNNdXRh
-			YmxlU3RyaW5nozEzJ1hOU1N0cmluZ9IiIzU2Xk5TTXV0YWJsZUFy
-			cmF5ozU3J1dOU0FycmF50iIjJjmiJicACAARABoAJAApADIANwBJ
-			AEwAUQBTAGEAZwBuAHYAgQCIAIwAjgCQAJIAlgCYAJoAnACeAKMA
-			qACtANYA3QDeAN8A4QDmAPEA+gEQARQBIQEqAS8BMQEzATUBOgFE
-			AUYBUQFWAWgBbAF1AXoBiQGNAZUBmgAAAAAAAAIBAAAAAAAAADoA
-			AAAAAAAAAAAAAAAAAAGd
+			YXRhgAGvEA8LDBkaGxwdIyQlLDA0ODxVJG51bGzTDQ4PEBQYV05T
+			LmtleXNaTlMub2JqZWN0c1YkY2xhc3OjERITgAKAA4AEoxUWF4AF
+			gAaACoAOVHR5cGVUcm93c1RrZXlzXxAmU2VsZWN0aW9uRGV0YWls
+			VHlwZVByaW1hcnlLZXllZERldGFpbHPTDQ4PHiAioR+AB6EhgAiA
+			CVI1MAnSJicoKVokY2xhc3NuYW1lWCRjbGFzc2VzXxATTlNNdXRh
+			YmxlRGljdGlvbmFyeaMoKitcTlNEaWN0aW9uYXJ5WE5TT2JqZWN0
+			0g4PLS+hLoALgA3SDzEyM1lOUy5zdHJpbmeADFptZXRhZGF0YUlk
+			0iYnNTZfEA9OU011dGFibGVTdHJpbmejNTcrWE5TU3RyaW5n0iYn
+			OTpeTlNNdXRhYmxlQXJyYXmjOTsrV05TQXJyYXnSJicqPaIqKwAI
+			ABEAGgAkACkAMgA3AEkATABRAFMAZQBrAHIAegCFAIwAkACSAJQA
+			lgCaAJwAngCgAKIApwCsALEA2gDhAOMA5QDnAOkA6wDuAO8A9AD/
+			AQgBHgEiAS8BOAE9AT8BQQFDAUgBUgFUAV8BZAF2AXoBgwGIAZcB
+			mwGjAagAAAAAAAACAQAAAAAAAAA+AAAAAAAAAAAAAAAAAAABqw==
 			</data>
+			<key>contentSortCol</key>
+			<string>contentType</string>
 			<key>contentSortColIsAsc</key>
 			<true/>
 			<key>contentViewport</key>
@@ -85,13 +87,12 @@
 
 SHOW TABLES;
 
-SELECT * FROM Playlists WHERE userDefinedName='testName' AND email='testEmail';
+SELECT * FROM ContentMetaData WHERE metadataId IN (SELECT metadataId FROM PlaylistContents WHERE playlistId=9);
 
-DELETE FROM ContentMetaData where contentName;
-
-SELECT metadataId FROM ContentMetaData WHERE contentName='THE GOOD PLACE' AND seasonNum=4 AND episodeNum=8 AND streamingService='netflix';
+SELECT * FROM ContentMetaData INNER JOIN PlaylistContents on ContentMetaData.metadataId = PlaylistContents.metadataId WHERE playlistId=9 ORDER BY id ASC;
 
 ALTER TABLE ContentMetaData MODIFY COLUMN streamingService ENUM('netflix', 'hulu', 'prime', 'peacock', 'hbo');
+
 /*
 Table Creation and Schema
 

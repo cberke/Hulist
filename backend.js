@@ -194,7 +194,7 @@ app.get('/episode', (req, res) => {
 
   let cacheCheckSql = `SELECT url, metadataId FROM ContentMetaData WHERE contentName=? AND seasonNum=? AND episodeNum=? AND streamingService=?`;
 
-  connection.query(cacheCheckSql, [title, seasonNum, episodeNum], function (err, results) {
+  connection.query(cacheCheckSql, [title, seasonNum, episodeNum, service], function (err, results) {
     if (err) {
       console.log(err.message);
     }
@@ -209,7 +209,7 @@ app.get('/episode', (req, res) => {
     } else {
       // Cache the URL and associated metadata
       let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType, seasonNum, episodeNum) VALUES(?,?,?,'EPISODE', ?, ?)`;
-      connection.query(insertSql, [episodeUrl, title, seasonNum, episodeNum, service], function (err, results) {
+      connection.query(insertSql, [episodeUrl, title, service, seasonNum, episodeNum], function (err, results) {
         if (err) {
           console.log(err.message);
         }
@@ -409,6 +409,77 @@ app.get('/deletePlaylist/', (req, res) => {
       endConnection(connection);
 
       res.json({ message: `Playlist not found`, });
+    }
+  });
+});
+
+app.get('/getPlaylistContents/', (req, res) => {
+  let playlistId = req.query.playlistId;
+
+  let connection = mysql.createConnection(config);
+
+  connection.connect(function (err) {
+    if (err) {
+      return console.error('error: ' + err.message);
+    }
+  });
+
+  let selectSql = `SELECT * FROM ContentMetaData INNER JOIN PlaylistContents on ContentMetaData.metadataId = PlaylistContents.metadataId WHERE playlistId=? ORDER BY id ASC`;
+
+
+  connection.query(selectSql, [playlistId], function (err, results) {
+    if (err) {
+      console.log(err.message);
+    }
+    if (results != null && results.length > 0) {
+      // Convert metadata into JSON
+      for (let i = 0; i < results.length; i++) {
+        results[i].url = results[i].url.toString();
+      }
+      endConnection(connection);
+      res.json(results);
+    } else {
+      endConnection(connection);
+
+      res.json({ message: `Playlist is empty`, });
+    }
+  });
+});
+
+app.get('/removeFromPlaylist/', (req, res) => {
+  let playlistId = req.query.playlistId;
+  let metadataId = req.query.metadataId;
+
+  let connection = mysql.createConnection(config);
+
+  connection.connect(function (err) {
+    if (err) {
+      return console.error('error: ' + err.message);
+    }
+  });
+
+  let deleteContentsSql = `DELETE FROM PlaylistContents WHERE playlistId=? AND metadataId=?`;
+
+  connection.query(deleteContentsSql, [playlistId, metadataId], function (err, results) {
+    let successful = true;
+    if (err) {
+      console.log(err.message);
+      successful = false;
+    }
+
+    endConnection(connection);
+
+    // send the confirmation
+    if (successful) {
+      res.json({
+        message: `Successfully deleted playlist`,
+        code: 1,
+      });
+    } else {
+      res.json({
+        message: `Failed to delete playlist`,
+        code: 0,
+      });
     }
   });
 });

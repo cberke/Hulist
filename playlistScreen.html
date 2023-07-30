@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    .title {
+      background-color: rgb(0, 222, 11);
+      color: rgb(0, 0, 0);
+      border: 2px solid black;
+      margin: 20px;
+      padding: 20px;
+    }
+
+    .contents {
+      padding: 20px;
+    }
+  </style>
+</head>
+
+<script type="text/javascript" src="functions.js"></script>
+
+<body onload='updatePlaylists("playlistSelect")'>
+
+  <div id="Header" class="title">
+    <h2>Streamlist</h2>
+    <p>name is a work in progress and not very good, be nice</p>
+    <a href="home.html">
+      <button class="block"><b>Home</b></button>
+    </a>
+    <br>
+    <a href="playlistScreen.html">
+      <button class="block"><b>Playlists</b></button>
+    </a>
+  </div>
+
+  <select name="playlistSelect" id="playlistSelect" data-role="slider" onchange="displayPlaylist()">
+    <option value="-" id="nullPlaylist">Select a Playlist</option>
+  </select>
+
+  <div id="playlistContentsSection" style='display: none'>
+  </div>
+
+  <p id="resultsText" style='display: block'>Test</p>
+</body>
+
+</html>
