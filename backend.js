@@ -31,7 +31,7 @@ app.get('/movie/', (req, res) => {
     }
   });
 
-  let cacheCheckSql = `SELECT url, metadataId FROM ContentMetaData WHERE contentName=? AND streamingService=?`;
+  let cacheCheckSql = `SELECT url, metadataId FROM ContentMetaData WHERE contentName=? AND streamingService=? AND contentType='MOVIE'`;
 
   connection.query(cacheCheckSql, [title.toUpperCase(), service], function (err, results) {
     if (err) {
@@ -56,7 +56,7 @@ app.get('/movie/', (req, res) => {
         .then((titleData) => {
           let id = titleData.imdbID;
           if (!id) {
-            res.status(418).send({ url: 'Movie not found, please check spelling.' });
+            res.status(418).send({ message: 'Movie not found, please check spelling.' });
             endConnection(connection);
           } else {
             fetch(`https://streaming-availability.p.rapidapi.com/v2/get/basic?country=us&imdb_id=${id}&output_language=en`, {
@@ -69,7 +69,7 @@ app.get('/movie/', (req, res) => {
             })
               .then(res => res.json())
               .then((data) => {
-                if (data.result.streamingInfo.us[service][0].watchLink != '') {
+                if (data.result.streamingInfo.us[service][0].watchLink != '' && data.result.type === 'movie') {
                   let watchLink = data.result.streamingInfo.us[service][0].watchLink
 
                   // cache the URL and associated metadata
@@ -102,7 +102,7 @@ app.get('/movie/', (req, res) => {
 
                   // send back response
                   res.json({
-                    url: `no url found in API`,
+                    message: `Movie not found, please check spelling`,
                     metadataId: -1,
                   });
                 }
@@ -148,7 +148,7 @@ app.get('/tvshow/', (req, res) => {
       .then((titleData) => {
         let id = titleData.imdbID;
         if (!id) {
-          res.status(418).send({ url: 'Show not found, please check spelling.' });
+          res.status(418).send({ message: 'Show not found, please check spelling.' });
         } else {
           fetch(`https://streaming-availability.p.rapidapi.com/v2/get/basic?country=us&imdb_id=${id}&output_language=en`, {
             method: 'GET',
@@ -161,7 +161,11 @@ app.get('/tvshow/', (req, res) => {
             .then(res => res.json())
             .then((data) => {
               // send the data back
-              res.json(data.result.seasons);
+              if (data.result.type != '' && data.result.type === 'series') {
+                res.json(data.result.seasons);
+              } else {
+                res.json({ message: 'TV show not found, please check spelling' })
+              }
             })
             .catch((error) => {
               res.status(418).send({ message: error.message });
@@ -182,6 +186,7 @@ app.get('/episode', (req, res) => {
   let episodeNum = req.query.episodeNum;
   let episodeUrl = req.query.episodeURL;
   let service = req.query.service;
+  let episodeName = req.query.episodeName;
 
   // Check if we have this URL cached
   let connection = mysql.createConnection(config);
@@ -208,8 +213,8 @@ app.get('/episode', (req, res) => {
       endConnection(connection);
     } else {
       // Cache the URL and associated metadata
-      let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType, seasonNum, episodeNum) VALUES(?,?,?,'EPISODE', ?, ?)`;
-      connection.query(insertSql, [episodeUrl, title, service, seasonNum, episodeNum], function (err, results) {
+      let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType, seasonNum, episodeNum, episodeName) VALUES(?,?,?,'EPISODE',?,?,?)`;
+      connection.query(insertSql, [episodeUrl, title, service, seasonNum, episodeNum, episodeName], function (err, results) {
         if (err) {
           console.log(err.message);
         }

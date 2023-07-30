@@ -10,15 +10,16 @@ function searchMovie() {
     .then((data) => {
       results = document.getElementById("resultsText");
       if (!data.url) {
-        results.innerText = "No URL found";
+        results.innerText = data.message;
+        document.getElementById("playlistFeatures").setAttribute("hidden", "hidden");
+        document.getElementById("playlistActionResults").style.display = "none";
       } else {
         results.innerText = data.url;
+        updatePlaylists("playlistSelect");
+        document.getElementById("playlistFeatures").removeAttribute("hidden");
+        sessionStorage.metadataId = data.metadataId;
       }
       results.style.display = "block";
-
-      updatePlaylists("playlistSelect");
-      document.getElementById("playlistFeatures").removeAttribute("hidden");
-      sessionStorage.metadataId = data.metadataId;
     })
     .catch((error) => {
       results = document.getElementById("resultsText");
@@ -35,20 +36,38 @@ function searchTvShow() {
   })
     .then(res => res.json())
     .then((data) => {
+      if (data.message) {
+        results = document.getElementById("resultsText");
+        results.innerText = data.message;
+        results.style.display = "block";
+        document.getElementById("seasonNum").style.display = "none";
+        document.getElementById("episodeSelect").style.display = "none";
+        document.getElementById("playlistFeatures").setAttribute("hidden", "hidden");
+        document.getElementById("playlistActionResults").style.display = "none";
+        return;
+      }
+
+      results.style.display = "none";
       seasons = document.getElementById("seasonNum");
       while (seasons.options.length > 1) {
         seasons.remove(1);
       }
 
+      successful = false;
       for (let i = 0; i < data.length; i++) {
         var option = document.createElement("option");
         option.text = `${i + 1}`;
         option.value = `${i + 1}`;
         seasons.add(option);
+        successful = true;
       }
       sessionStorage.currShow = JSON.stringify(data);
-      document.getElementById("episodeNum").style.display = "none";
-      seasons.style.display = "block";
+      document.getElementById("episodeSelect").style.display = "none";
+      if (successful) {
+        seasons.style.display = "block";
+      } else {
+        seasons.style.display = "none";
+      }
     })
     .catch((error) => {
       results = document.getElementById("resultsText");
@@ -67,7 +86,7 @@ function updateEpisodes() {
   service = serviceElement.value;
 
   data = JSON.parse(sessionStorage.currShow);
-  episodes = document.getElementById("episodeNum");
+  episodes = document.getElementById("episodeSelect");
   while (episodes.options.length > 1) {
     episodes.remove(1);
   }
@@ -75,10 +94,11 @@ function updateEpisodes() {
   let anyLinkFound = false;
   for (let i = 0; i < data[seasonNum - 1].episodes.length; i++) {
     let url = data[seasonNum - 1].episodes[i].streamingInfo.us[service][0].watchLink;
+    let episodeName = data[seasonNum - 1].episodes[i].title;
     if (url) {
       let option = document.createElement("option");
       option.value = `${url}`;
-      option.text = `${i + 1}`;
+      option.text = `${i + 1}: ${episodeName}`;
       episodes.add(option);
       anyLinkFound = true;
     }
@@ -95,17 +115,19 @@ function updateEpisodes() {
 
 function searchEpisode() {
   seasonNum = document.getElementById("seasonNum").value;
-  selectedIndex = document.getElementById("episodeNum").selectedIndex;
-  episodeNum = document.getElementById("episodeNum").options[selectedIndex].text;
-  episodeUrl = document.getElementById("episodeNum").value;
+  selectedIndex = document.getElementById("episodeSelect").selectedIndex;
+  episodeSelectString = document.getElementById("episodeSelect").options[selectedIndex].text;
+  const episodeIdentifiers = episodeSelectString.split(": ")
+  episodeUrl = document.getElementById("episodeSelect").value;
+  episodeNum = episodeIdentifiers[0];
+  episodeName = episodeIdentifiers[1];
   data = JSON.parse(sessionStorage.currShow);
 
   titleElement = document.getElementById("title");
   title = titleElement.value;
   serviceElement = document.getElementById("streamingServiceSelect");
   service = serviceElement.value;
-
-  fetch(`http://localhost:8080/episode?title=${title}&seasonNum=${seasonNum}&episodeNum=${episodeNum}&episodeURL=${episodeUrl}&service=${service}`, {
+  fetch(`http://localhost:8080/episode?title=${title}&seasonNum=${seasonNum}&episodeNum=${episodeNum}&episodeURL=${episodeUrl}&service=${service}&episodeName=${episodeName}`, {
     method: 'GET',
   })
     .then(res => res.json())
@@ -143,9 +165,10 @@ function toggle() {
     document.getElementById('searchButton').setAttribute('onclick', 'searchTvShow()')
   } else {
     document.getElementById("seasonNum").style.display = "none";
-    document.getElementById("episodeNum").style.display = "none";
+    document.getElementById("episodeSelect").style.display = "none";
     document.getElementById('searchButton').setAttribute('onclick', 'searchMovie()')
   }
+  document.getElementById("resultsText").style.display = "none";
   document.getElementById('title').value = "";
   document.getElementById("playlistFeatures").setAttribute("hidden", "hidden");
 }
