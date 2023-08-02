@@ -340,11 +340,12 @@ function removeAllPlaylistContentElements() {
 function playPlaylist(startingIndex) {
   let urls = "";
   if (document.getElementById("shuffleToggleBtn").checked) {
+    startingIndex = shufflePlaylist(startingIndex);
     urls = sessionStorage.shuffledUrls;
   } else {
     urls = sessionStorage.playlistUrls;
   }
-  window.open(`${urls.split(",")[startingIndex]}`, '_blank');
+  window.open(`${urls.split(",")[startingIndex === -1 ? 0 : startingIndex]}`, '_blank');
 }
 
 function displayPlaylist() {
@@ -419,15 +420,19 @@ function displayPlaylist() {
     });
 }
 
-function toggleShuffle() {
-  if (document.getElementById("shuffleToggleBtn").checked) {
-    let shuffledUrls = sessionStorage.playlistUrls.split(",");
-    for (i = shuffledUrls.length - 1; i > 0; i--) {
-      let j = Math.floor(Math.random() * (i + 1));
-      let temp = shuffledUrls[i];
-      shuffledUrls[i] = shuffledUrls[j];
-      shuffledUrls[j] = temp;
+function shufflePlaylist(startingIndex) {
+  let shuffledUrls = sessionStorage.playlistUrls.split(",");
+  for (i = shuffledUrls.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    let temp = shuffledUrls[i];
+    shuffledUrls[i] = shuffledUrls[j];
+    shuffledUrls[j] = temp;
+    if (startingIndex === i) {
+      startingIndex = j;
+    } else if (startingIndex === j) {
+      startingIndex = i;
     }
-    sessionStorage.shuffledUrls = shuffledUrls;
   }
+  sessionStorage.shuffledUrls = shuffledUrls;
+  return startingIndex;
 }
