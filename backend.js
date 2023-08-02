@@ -33,7 +33,7 @@ app.get('/movie/', (req, res) => {
 
   let cacheCheckSql = `SELECT url, metadataId FROM ContentMetaData WHERE contentName=? AND streamingService=? AND contentType='MOVIE'`;
 
-  connection.query(cacheCheckSql, [title.toUpperCase(), service], function (err, results) {
+  connection.query(cacheCheckSql, [title, service], function (err, results) {
     if (err) {
       console.log(err.message);
     }
@@ -77,7 +77,7 @@ app.get('/movie/', (req, res) => {
                   // cache the URL and associated metadata
                   let insertSql = `INSERT INTO ContentMetaData(url, contentName, streamingService, contentType) VALUES(?,?,?,'MOVIE')`;
 
-                  connection.query(insertSql, [watchLink, title.toUpperCase(), service], function (err, results) {
+                  connection.query(insertSql, [watchLink, data.result.title, service], function (err, results) {
                     if (err) {
                       console.log(err.message);
                     }
@@ -85,7 +85,7 @@ app.get('/movie/', (req, res) => {
 
                   // get metadataId for the movie we just inserted                  
                   let selectSql = `SELECT metadataId FROM ContentMetaData WHERE contentName=?`;
-                  connection.query(selectSql, [title.toUpperCase()], function (err, results) {
+                  connection.query(selectSql, [title], function (err, results) {
                     if (err) {
                       console.log(err.message);
                     }
@@ -165,7 +165,7 @@ app.get('/tvshow/', (req, res) => {
             .then((data) => {
               // send the data back
               if (data.result.type && data.result.type === 'series' && data.result.streamingInfo.us[service]) {
-                res.json(data.result.seasons);
+                res.json(data.result);
               } else {
                 res.json({ message: 'TV show not found on selected streaming platform, please check spelling' })
               }
@@ -184,7 +184,7 @@ app.get('/tvshow/', (req, res) => {
 app.get('/episode', (req, res) => {
 
   let title = req.query.title;
-  title = title.toUpperCase();
+  title = title;
   let seasonNum = req.query.seasonNum;
   let episodeNum = req.query.episodeNum;
   let episodeUrl = req.query.episodeURL;

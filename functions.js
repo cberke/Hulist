@@ -56,7 +56,7 @@ function searchTvShow() {
       }
 
       successful = false;
-      for (let i = 0; i < data.length; i++) {
+      for (let i = 0; i < data.seasons.length; i++) {
         var option = document.createElement("option");
         option.text = `${i + 1}`;
         option.value = `${i + 1}`;
@@ -94,9 +94,9 @@ function updateEpisodes() {
   }
 
   let anyLinkFound = false;
-  for (let i = 0; i < data[seasonNum - 1].episodes.length; i++) {
-    let url = data[seasonNum - 1].episodes[i].streamingInfo.us[service][0].watchLink;
-    let episodeName = data[seasonNum - 1].episodes[i].title;
+  for (let i = 0; i < data.seasons[seasonNum - 1].episodes.length; i++) {
+    let url = data.seasons[seasonNum - 1].episodes[i].streamingInfo.us[service][0].watchLink;
+    let episodeName = data.seasons[seasonNum - 1].episodes[i].title;
     if (url) {
       let option = document.createElement("option");
       option.value = `${url}`;
@@ -125,8 +125,7 @@ function searchEpisode() {
   episodeName = episodeIdentifiers[1];
   data = JSON.parse(sessionStorage.currShow);
 
-  titleElement = document.getElementById("title");
-  title = titleElement.value;
+  title = data.title;
   serviceElement = document.getElementById("streamingServiceSelect");
   service = serviceElement.value;
   fetch(`http://localhost:8080/episode?title=${title}&seasonNum=${seasonNum}&episodeNum=${episodeNum}&episodeURL=${episodeUrl}&service=${service}&episodeName=${episodeName}`, {
@@ -339,7 +338,13 @@ function removeAllPlaylistContentElements() {
 }
 
 function playPlaylist(startingIndex) {
-  window.open(`${sessionStorage.playlistUrls.split(",")[startingIndex]}`, '_blank');
+  let urls = "";
+  if (document.getElementById("shuffleToggleBtn").checked) {
+    urls = sessionStorage.shuffledUrls;
+  } else {
+    urls = sessionStorage.playlistUrls;
+  }
+  window.open(`${urls.split(",")[startingIndex]}`, '_blank');
 }
 
 function displayPlaylist() {
@@ -351,10 +356,12 @@ function displayPlaylist() {
     .then(res => res.json())
     .then((data) => {
       removeAllPlaylistContentElements();
+      document.getElementById("shuffleToggleBtn").checked = false;
       if (data.message) {
         results = document.getElementById("resultsText");
         results.innerText = data.message;
         results.style.display = "block";
+        document.getElementById("playlistOptions").setAttribute("hidden", "hidden");
         return;
       }
 
@@ -365,15 +372,19 @@ function displayPlaylist() {
 
         const contentInfo = document.createElement("label");
         if (data[i].contentType === "MOVIE") {
-          contentInfo.innerText = `${data[i].contentName}: ${data[i].url}`;
+          contentInfo.innerText = `${data[i].contentName}`;
         } else {
-          contentInfo.innerText = `${data[i].contentName} S${data[i].seasonNum} E${data[i].episodeNum} ${data[i].episodeName}: ${data[i].url}`;
+          contentInfo.innerText = `${data[i].contentName} S${data[i].seasonNum} E${data[i].episodeNum} ${data[i].episodeName}`;
         }
         contentInfo.style.paddingRight = '10px';
         contentInfo.style.lineHeight = '3';
 
         const playEpisode = document.createElement("button");
-        playEpisode.innerText = 'Play Episode';
+        if (data[i].contentType === "MOVIE") {
+          playEpisode.innerText = 'Play Movie';
+        } else {
+          playEpisode.innerText = 'Play Episode';
+        }
         playEpisode.style.marginRight = '10px';
         playEpisode.onclick = function () { playPlaylist(i); };
 
@@ -392,6 +403,10 @@ function displayPlaylist() {
 
       if (data.length > 0) {
         sessionStorage.playlistUrls = playlistUrls;
+        document.getElementById("playlistOptions").removeAttribute("hidden");
+        document.getElementById("resultsText").style.display = "none";
+      } else {
+        document.getElementById("playlistOptions").setAttribute("hidden", "hidden");
       }
 
       document.getElementById("playlistContentsSection").style.display = "block"
@@ -402,4 +417,17 @@ function displayPlaylist() {
       results.innerText = error.message;
       results.style.display = "block";
     });
+}
+
+function toggleShuffle() {
+  if (document.getElementById("shuffleToggleBtn").checked) {
+    let shuffledUrls = sessionStorage.playlistUrls.split(",");
+    for (i = shuffledUrls.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1));
+      let temp = shuffledUrls[i];
+      shuffledUrls[i] = shuffledUrls[j];
+      shuffledUrls[j] = temp;
+    }
+    sessionStorage.shuffledUrls = shuffledUrls;
+  }
 }
