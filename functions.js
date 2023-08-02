@@ -345,7 +345,23 @@ function playPlaylist(startingIndex) {
   } else {
     urls = sessionStorage.playlistUrls;
   }
-  window.open(`${urls.split(",")[startingIndex === -1 ? 0 : startingIndex]}`, '_blank');
+  startingIndex = startingIndex === -1 ? 0 : startingIndex;
+  let streamingTab = window.open(`${urls.split(",")[startingIndex]}`, '_blank');
+  configurePlayNext((startingIndex + 1) % urls.length, streamingTab, urls.split(","), null);
+}
+
+function configurePlayNext(nextIndex, streamingTab, urls, toRemove) {
+  if (toRemove) {
+    streamingTab.removeEventListener('beforeunload', toRemove);
+  }
+
+  let redirect = function () {
+    // Check if you want to navigate to a new URL
+    streamingTab.location.href = `${urls[nextIndex]}`;
+    configurePlayNext((nextIndex + 1) % urls.length, streamingTab, urls, redirect);
+  };
+
+  streamingTab.addEventListener('beforeunload', redirect);
 }
 
 function displayPlaylist() {
